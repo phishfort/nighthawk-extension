@@ -1,0 +1,39 @@
+{
+	"name": "Nighthawk by PhishFort",
+	"description": "Base Level Extension",
+	"version": "1.0.0",
+	"browser_specific_settings": {
+		"gecko": {
+			"strict_min_version": "54.0a1"
+		}
+	},
+	"manifest_version": 2,
+	"icons": {
+		"24": "/assets/logo/ic-nighthawk-trusted.png",
+		"48": "/assets/logo/ic-nighthawk-trusted.png"
+	},
+	"browser_action": {
+		"default_icon": {
+			"24": "/assets/logo/ic-nighthawk-unknown.png",
+			"48": "/assets/logo/ic-nighthawk-unknown.png"
+		},
+		"default_popup": "index.html",
+		"default_title": "Nighthawk by PhishFort"
+	},
+	"content_scripts": [
+		{
+			"matches": ["<all_urls>"],
+			"js": ["./static/js/content.js"],
+			"match_about_blank": true,
+			"all_frames": true,
+			"run_at": "document_end"
+		}
+	],
+	"content_security_policy": "script-src 'self' http://localhost:5000; object-src 'self'",
+	"background": {
+		"scripts": ["./static/js/event.js"],
+		"persistent": true
+	},
+	"permissions": ["activeTab", "tabs", "unlimitedStorage", "storage", "<all_urls>"],
+	"web_accessible_resources": ["static/media/*.png"]
+}

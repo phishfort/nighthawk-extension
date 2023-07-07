@@ -1,0 +1,81 @@
+{
+	"name": "mosey-extension",
+	"version": "1.0.0",
+	"private": true,
+	"dependencies": {
+		"@craco/craco": "^6.4.3",
+		"@emotion/react": "^11.9.0",
+		"@emotion/styled": "^11.8.1",
+		"@mui/icons-material": "^5.6.0",
+		"@mui/material": "^5.6.0",
+		"@reduxjs/toolkit": "^1.8.1",
+		"@testing-library/jest-dom": "^5.16.4",
+		"@testing-library/react": "^12.1.4",
+		"@testing-library/user-event": "^13.5.0",
+		"@types/jest": "^27.4.1",
+		"@types/node": "^16.11.26",
+		"@types/react": "^17.0.43",
+		"@types/react-dom": "^17.0.14",
+		"@types/react-redux": "^7.1.23",
+		"@types/react-router-dom": "^5.3.3",
+		"axios": "^0.27.2",
+		"caniuse-lite": "^1.0.30001418",
+		"canvas-confetti": "^1.5.1",
+		"date-fns": "^2.29.3",
+		"env-cmd": "^10.1.0",
+		"formik": "^2.2.9",
+		"lodash.countby": "^4.6.0",
+		"lodash.sorteduniqby": "^4.7.0",
+		"moment": "^2.29.3",
+		"react": "^18.0.0",
+		"react-dom": "^18.0.0",
+		"react-redux": "^7.2.8",
+		"react-router-dom": "^6.3.0",
+		"react-scripts": "5.0.0",
+		"react-select": "^5.5.0",
+		"react-swipeable-views": "^0.14.0",
+		"redux": "^4.1.2",
+		"reselect": "^4.1.5",
+		"typescript": "^4.6.3",
+		"web-vitals": "^2.1.4",
+		"webext-redux": "^2.1.9"
+	},
+	"scripts": {
+		"start": "react-scripts start",
+		"build": "env-cmd -f .env craco build",
+		"build-v2": "set REACT_APP_MANIFEST_VERSION_V2=true && env-cmd -f .env craco build",
+		"build-witout-side-servers": "INLINE_RUNTIME_CHUNK=false craco build",
+		"test": "react-scripts test",
+		"eject": "react-scripts eject",
+		"format": "prettier --write \"src/**/*.ts\" \"src/**/*.tsx\""
+	},
+	"eslintConfig": {
+		"extends": [
+			"react-app",
+			"react-app/jest"
+		]
+	},
+	"browserslist": {
+		"production": [
+			">0.2%",
+			"not dead",
+			"not op_mini all"
+		],
+		"development": [
+			"last 1 chrome version",
+			"last 1 firefox version",
+			"last 1 safari version"
+		]
+	},
+	"devDependencies": {
+		"@redux-devtools/extension": "^3.2.2",
+		"@types/chrome": "^0.0.180",
+		"@types/firefox-webext-browser": "^94.0.1",
+		"@types/react-swipeable-views": "^0.13.1",
+		"@types/redux-logger": "^3.0.9",
+		"redux-logger": "^3.0.6",
+		"eslint-config-prettier": "^8.5.0",
+		"eslint-plugin-prettier": "^4.2.1",
+		"prettier": "^2.7.1"
+	}
+}

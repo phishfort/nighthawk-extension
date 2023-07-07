@@ -1,0 +1,41 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Roboto:wght@700&family=Work+Sans:wght@600&display=swap');
+
+body {
+	margin: 0;
+	font-family: 'IBM Plex Sans';
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+	srollbar-width: none;
+}
+
+code {
+	font-family: 'IBM Plex Sans';
+}
+
+#root {
+	width: 280px;
+	color: white;
+}
+
+a {
+	color: white;
+}
+
+.MuiAutocomplete-paper {
+	max-height: 130px !important;
+	overflow-y: hidden !important;
+	border-radius: 0 !important;
+}
+
+.MuiAutocomplete-listbox {
+	max-height: 130px !important;
+	padding: 0 !important;
+}
+
+.MuiAutocomplete-option {
+	padding-left: 12px !important;
+	min-height: 32px !important;
+	font-size: 14px;
+	font-weight: normal;
+	font-family: 'IBM Plex Sans', sans-serif;
+}
