@@ -1,7 +1,7 @@
 {
 	"name": "Nighthawk by PhishFort",
-	"description": "Base Level Extension",
-	"version": "1.0.0",
+	"description": "Protect yourself from phishing attacks.",
+	"version": "1.0.1.12",
 	"browser_specific_settings": {
 		"gecko": {
 			"strict_min_version": "54.0a1"

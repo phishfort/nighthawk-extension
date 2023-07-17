@@ -1,7 +1,7 @@
 {
 	"name": "Nighthawk by PhishFort",
-	"description": "Base Level Extension",
-	"version": "1.0.0",
+	"description": "Protect yourself from phishing attacks.",
+	"version": "1.0.1.12",
 	"manifest_version": 3,
 	"icons": {
 		"24": "/assets/logo/ic-nighthawk-trusted.png",
@@ -27,7 +27,7 @@
 	"background": {
 		"service_worker": "./static/js/event.js"
 	},
-	"permissions": ["activeTab", "tabs", "unlimitedStorage", "storage", "scripting", "identity", "identity.email"],
+	"permissions": ["activeTab", "tabs", "unlimitedStorage", "storage"],
 	"host_permissions": ["*://*/*"],
 	"web_accessible_resources": [
 		{
