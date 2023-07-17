@@ -23,4 +23,47 @@ The plugin will indicate different colors depending on the website you're visiti
 - ⚪️ **Grey**: The site hasn't been categorized. It's not necessarily unsafe, but proceed with caution!
 - 🔴 **Red**: The site is most likely dangerous. If you visit a malicious website, the plugin will notify you that you are on an unsafe site and you'll be sent back to safety. You're also able to bypass the warning if you need!
 
+## Build Locally
+
+Clone the project
+
+```bash
+  git clone https://github.com/phishfort/nighthawk-extension.git
+```
+
+Go to the project directory
+
+```bash
+  cd nighthawk-extension
+```
+
+Install dependencies
+
+```bash
+  yarn
+```
+
+Start the server
+
+```bash
+  yarn run start
+```
+
+Generate new build
+
+```bash
+  yarn run build
+```
+
+## Requirements
+
+### Operating system
+
+Should works fine on any but tested on `Ubuntu 22.04.2`
+
+### Engines
+
+- `node` >= 14.0.0
+- `npm` >= 6.0.0 or `yarn` >=1.0.0
+
 We're always looking to make the plugin better. Please let us know if you have any suggestions or ideas.
