@@ -3,7 +3,7 @@ build
 
 
 .env
-yarn.lock
+# yarn.lock
 yarn-error.log
 # Default ignored files
 

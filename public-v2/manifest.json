@@ -29,7 +29,7 @@
 			"run_at": "document_end"
 		}
 	],
-	"content_security_policy": "script-src 'self' http://localhost:5000; object-src 'self'",
+	"content_security_policy": "script-src 'self' object-src 'self'",
 	"background": {
 		"scripts": ["./static/js/event.js"],
 		"persistent": true
