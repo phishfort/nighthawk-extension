@@ -42,7 +42,9 @@ export class StorageService {
 
 	public async getNighthawkListFromStorage() {
 		const data = await browser.storage.local.get(STORAGE_KEYS.NIGHTHAWK_LIST);
-		if (data.cacheTime && Date.now() - data.cacheTime > CACHE_TIME) {
+		const nighthawkCacheTime = await browser.storage.local.get(STORAGE_KEYS.NH_CACHE_TIME);
+		const cacheTime = nighthawkCacheTime[STORAGE_KEYS.NH_CACHE_TIME];
+		if (cacheTime && Date.now() - cacheTime > CACHE_TIME) {
 			return null;
 		}
 
@@ -50,7 +52,7 @@ export class StorageService {
 	}
 
 	public setNighthawkListToStorage(list: INighthawkResponse) {
-		browser.storage.local.set({ [STORAGE_KEYS.NIGHTHAWK_LIST]: list, cacheTime: Date.now() });
+		browser.storage.local.set({ [STORAGE_KEYS.NIGHTHAWK_LIST]: list, [STORAGE_KEYS.NH_CACHE_TIME]: Date.now() });
 	}
 }
 
