@@ -24,15 +24,19 @@ export function getValidUrl(url: string): string {
 
 		// facebook
 		if (validUrl.includes('facebook.com')) {
-			if (searchParams) {
-				validUrl = searchParams.get('id') || searchParams.get('profile_id') || '';
-				if (!validUrl) {
-					return pathname.split('/').filter(Boolean)[0];
-				}
-				return validUrl;
+			if (searchParams.get('id')) {
+				return searchParams.get('id') as string;
 			}
+
+			// look for id in group/, page/, people/
+			const regexToFindId = /(?<=\/)(\d{14,})(?=\/|$)/;
+			const id = pathname.match(regexToFindId);
+			if (id && id[0]) {
+				return id[0];
+			}
+
 			const arr = pathname.split('/').filter(Boolean);
-			return arr[arr.length - 1];
+			return arr.splice(0, 2).join('/') || validUrl;
 		}
 
 		// youtube
@@ -63,13 +67,13 @@ export function getValidUrl(url: string): string {
 		// twitter
 		if (validUrl.includes('twitter.com')) {
 			const arr = pathname.split('/').filter(Boolean);
-			return pathname.split('/').filter(Boolean)[0] || arr[arr.length - 1]; // check account if not author
+			return pathname.split('/').filter(Boolean)[0] || validUrl; // check account if not author
 		}
 
 		// linkedin
 		if (validUrl.includes('linkedin.com')) {
 			const arr = pathname.split('/').filter(Boolean);
-			return arr[arr.length - 1];
+			return arr.slice(0, 2).join('/') || validUrl;
 		}
 	}
 

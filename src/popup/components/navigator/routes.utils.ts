@@ -74,7 +74,7 @@ export const EXTERNAL_ROUTES = {
 	TRUSTED_LIST: `${process.env.REACT_APP_WEB_URL}${ROUTES.TRUSTED_LIST}`,
 	PROFILE: `${process.env.REACT_APP_WEB_URL}${ROUTES.YOUR_ACCOUNT}`,
 	NIGHTHAWK_TRUSTED_LIST: `${process.env.REACT_APP_WEB_URL}${ROUTES.NIGHTHAWK_TRUSTED_LIST}`,
-	SAFE_BROWSING: 'https://safebrowsing.google.com/safebrowsing/report_general'
+	SAFE_BROWSING: `${process.env.REACT_APP_SAFE_BROWSER_URL}`
 };
 
 export const publicRoutes: GenericRouteType[] = [

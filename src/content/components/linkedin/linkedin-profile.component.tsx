@@ -7,11 +7,12 @@ import { checkScam, selectCheckDataLinkedin } from '../../../popup/features/stor
 import storeWithMiddleware from '../../../common/mockStore';
 import { createLinkedinIcon, getLinkedinAcc } from './linkedin.util';
 import { handleFinishedIcon } from '../../utils/index.util';
+import { getValidUrl } from '../../../api/utils/validate-url';
 
 const LinkedinProfileContentPage: React.FC = () => {
 	const { pathname } = document.location;
 	const checkData = useAppSelector(selectCheckDataLinkedin);
-	const acc = getLinkedinAcc(pathname);
+	const acc = getValidUrl(document.location.href);
 	const [forceRefresh, setForceRefresh] = useState(true);
 
 	const handleCheckScam = (url: string) => {
