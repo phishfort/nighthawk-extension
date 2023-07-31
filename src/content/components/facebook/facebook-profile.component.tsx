@@ -8,6 +8,7 @@ import storeWithMiddleware from '../../../common/mockStore';
 import { createFBProfileIcon, getFBAcc } from './facebook.util';
 import { createIconBadge } from '../../utils/icon.util';
 import { includedPaths } from './index';
+import { getValidUrl } from '../../../api/utils/validate-url';
 
 const FacebookProfileContentPage: React.FC = () => {
 	const location = document.location;
@@ -18,7 +19,7 @@ const FacebookProfileContentPage: React.FC = () => {
 	const [elementWidth, setElementWidth] = useState(0);
 
 	const iconRef = useRef<HTMLElement | null>(null);
-	const acc = getFBAcc(location);
+	const acc = getValidUrl(document.location.href);
 
 	const handleUpdate = () => {
 		setForceRefresh((prev) => !prev);

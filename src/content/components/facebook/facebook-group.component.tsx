@@ -7,13 +7,14 @@ import { useAppSelector } from '../../../event/store';
 import { checkScam, selectCheckDataFacebook } from '../../../popup/features/store/scam';
 import storeWithMiddleware from '../../../common/mockStore';
 import { getFBGroup } from './facebook.util';
+import { getValidUrl } from '../../../api/utils/validate-url';
 
 const FacebookGroupContentPage: React.FC = () => {
 	const { pathname } = document.location;
 	const checkData = useAppSelector(selectCheckDataFacebook);
 	const [forceRefresh, setForceRefresh] = useState(true);
 
-	const group = getFBGroup(pathname);
+	const group = getValidUrl(document.location.href);
 
 	const handleUpdate = () => {
 		setForceRefresh((prev) => !prev);
