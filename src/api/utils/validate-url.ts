@@ -35,8 +35,7 @@ export function getValidUrl(url: string): string {
 				return id[0];
 			}
 
-			const arr = pathname.split('/').filter(Boolean);
-			return arr.splice(0, 2).join('/') || validUrl;
+			return pathname.split('/').filter(Boolean)[0] || validUrl;
 		}
 
 		// youtube
@@ -66,14 +65,12 @@ export function getValidUrl(url: string): string {
 
 		// twitter
 		if (validUrl.includes('twitter.com')) {
-			const arr = pathname.split('/').filter(Boolean);
 			return pathname.split('/').filter(Boolean)[0] || validUrl; // check account if not author
 		}
 
 		// linkedin
 		if (validUrl.includes('linkedin.com')) {
-			const arr = pathname.split('/').filter(Boolean);
-			return arr.slice(0, 2).join('/') || validUrl;
+			return pathname.split('/').filter(Boolean)[1] || validUrl;
 		}
 	}
 
