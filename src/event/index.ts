@@ -91,6 +91,12 @@ browser.runtime.onConnect.addListener((port) => {
 			storageService.setPointsToStorage(msg.points);
 		});
 	}
+
+	if (port.name === process.env.REACT_APP_DANGER_AGREE) {
+		port.onMessage.addListener((msg) => {
+			storageService.setDangerAgreeListToStorage(msg.url);
+		});
+	}
 });
 
 // Hack BG script reload with send message in bg to content script

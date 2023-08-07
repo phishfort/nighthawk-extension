@@ -1,3 +1,4 @@
+//@ts-nocheck
 import { useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '../event/store';
 import DangerousContentPage from './components/dangerous';
@@ -16,6 +17,14 @@ import { checkSourceType } from './features/store/source/actions';
 import { getOriginFromHref, removeWWW } from './utils/index.util';
 import { browser } from '../browser-service';
 import { selectIsAuth } from '../popup/features/store/auth';
+import WarningManagerComponent from './warning-manager.component';
+
+const isSafeSuspect = (href: string) => {
+	const dangerousProtocol = ['javascript:'];
+	const suspectUrl = new URL(href);
+
+	return dangerousProtocol.indexOf(suspectUrl.protocol) < 0;
+};
 
 function ContentComponent() {
 	const { host, href, pathname, search } = document.location;
@@ -36,13 +45,14 @@ function ContentComponent() {
 
 	useEffect(() => {
 		if (href === activeTab) {
-			// check scam for all user
 			handleCheckSourceType(cutHost);
 		}
 	}, [host, activeOrigin, isAuth]);
 
 	useEffect(() => {
-		if (sourceData && sourceData[cutHost]) {
+		if (href.includes(`${process.env.REACT_APP_NIGHTHAWK_WARNING}`)) {
+			browser?.runtime?.sendMessage({ newIconPath: '/assets/logo/ic-nighthawk-dangerous.png' }, (response) => response);
+		} else if (sourceData && sourceData[cutHost]) {
 			browser?.runtime?.sendMessage(
 				{ newIconPath: `/assets/logo/${defineIconName(sourceData[cutHost])}` },
 				(response) => response
@@ -52,9 +62,14 @@ function ContentComponent() {
 
 	return (
 		<>
-			{sourceData && sourceData[cutHost] === EWebStatus.DANGEROUS && <DangerousContentPage />}
+			{sourceData &&
+				sourceData[cutHost] === EWebStatus.DANGEROUS &&
+				isSafeSuspect(href) &&
+				window.location.replace(`${process.env.REACT_APP_NIGHTHAWK_WARNING}?url=${href}`)}
+
 			{host === HOST_KEYS.YOUTUBE && <YoutubeContentPage />}
 			{host === HOST_KEYS.NIGHTHAWK_WEB_VERSION && <TokenManagerComponent />}
+			{href.includes(`${process.env.REACT_APP_NIGHTHAWK_WARNING}`) && <WarningManagerComponent />}
 			{host === HOST_KEYS.TWITTER && <TwitterContentPage />}
 			{host === HOST_KEYS.GOOGLE && <GoogleContentPage />}
 			{host === HOST_KEYS.FACEBOOK && <FacebookContentPage />}

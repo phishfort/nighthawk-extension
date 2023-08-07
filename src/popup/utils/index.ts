@@ -17,6 +17,7 @@ export const handleRedirect = (url: string) => {
 };
 
 export const getInitRoute = (activeTab: string, type: EWebStatus) => {
+	if (activeTab && activeTab.includes(`${process.env.REACT_APP_NIGHTHAWK_WARNING}`)) return ROUTES.DANGEROUS;
 	return !activeTab?.includes('http')
 		? ROUTES.UNKNOWN
 		: type === EWebStatus.DANGEROUS

@@ -1,3 +1,4 @@
+//@ts-nocheck
 import { ThemeProvider } from '@mui/material/styles';
 import React from 'react';
 import ReactDOM from 'react-dom';
@@ -13,7 +14,6 @@ const anchor = document.createElement('div');
 anchor.id = 'nighthawk-content-anchor';
 document.body.insertBefore(anchor, document.body.childNodes[0]);
 
-// @ts-ignore
 ReactDOM.render(
 	<React.StrictMode>
 		<Provider store={store}>
