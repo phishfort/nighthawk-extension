@@ -1,3 +1,4 @@
+//@ts-nocheck
 import * as React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FormikProvider, useFormik } from 'formik';
@@ -24,7 +25,7 @@ import { SOC_MEDIA } from '../../../common/constants/app-keys.const';
 import { useEffect, useState } from 'react';
 import { getActiveTab } from '../../../content/features/store/source/sourceSlice';
 import { handleFormType, options } from '../../utils';
-
+import { storageService } from '../../../api/services';
 interface AddTrustedPageProps {}
 
 const MAX_STEPS = 2;
@@ -37,8 +38,7 @@ const AddTrustedPage: React.FC<AddTrustedPageProps> = () => {
 	const [currentStep, { canGoToNextStep, reset, setStep }] = useStep(MAX_STEPS);
 	const [customErrors, setCustomErrors] = useState<boolean>(false);
 
-	const isNotWebsite =
-		!activeTab?.includes('http') || Object.values(SOC_MEDIA).some((el) => activeTab?.includes(el));
+	const isNotWebsite = !activeTab?.includes('http') || Object.values(SOC_MEDIA).some((el) => activeTab?.includes(el));
 	const initUrl = isNotWebsite ? '' : activeTab;
 	const initSelectValue = isNotWebsite
 		? null
@@ -49,7 +49,6 @@ const AddTrustedPage: React.FC<AddTrustedPageProps> = () => {
 	const [selectedValue, setSelectedValue] = React.useState<FormSelectProps | null>(initSelectValue);
 
 	useEffect(() => {
-		// @ts-ignore
 		storeWithMiddleware.then(({ dispatch }) => dispatch(fetchNighthawkGreyList()));
 	}, []);
 
@@ -64,7 +63,6 @@ const AddTrustedPage: React.FC<AddTrustedPageProps> = () => {
 		onSubmit: ({ url, comment }, { resetForm }) => {
 			storeWithMiddleware
 				.then(({ dispatch }) =>
-					// @ts-ignore
 					dispatch(
 						addToTrustedList({
 							type: selectedValue?.value as EType,
@@ -74,7 +72,10 @@ const AddTrustedPage: React.FC<AddTrustedPageProps> = () => {
 						})
 					)
 				)
-				.then(() => navigate(ROUTES.ADDED_TO_TRUSTED));
+				.then(() => {
+					storageService.removeTrustedListFromStorage();
+					navigate(ROUTES.ADDED_TO_TRUSTED);
+				});
 			resetForm();
 		},
 		validationSchema: validationSchema()

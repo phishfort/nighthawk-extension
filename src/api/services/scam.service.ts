@@ -97,7 +97,21 @@ class ScamReportService {
 			});
 		}
 
-		// INFO: trust list is not used for now
+		let trustedList = await storageService.getTrustedListFromStorage();
+		if (!trustedList) {
+			trustedList = await trustedListService.getAllTrustedList();
+			storageService.setTrustedListToStorage(trustedList);
+		}
+
+		trustedList.forEach((tl: ITrustedList) => {
+			const trustedListUrl = getValidUrl(tl.url);
+			const item = trustedListUrl && trustedListUrl.toLowerCase() === getValidUrl(data.url).toLowerCase();
+			if (item) {
+				isSafe = true;
+				return;
+			}
+		});
+
 		if (isDangerous) return { status: EWebStatus.DANGEROUS };
 		if (isSafe) return { status: EWebStatus.SAFE };
 		return { status: EWebStatus.UNKNOWN };

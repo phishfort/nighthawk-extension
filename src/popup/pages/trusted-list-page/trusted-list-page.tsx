@@ -1,3 +1,4 @@
+//@ts-nocheck
 import * as React from 'react';
 import TrustedListItem from './components/trusted-list-item';
 import {
@@ -7,24 +8,19 @@ import {
 } from './trusted-list-page.styled';
 import * as GlobalTypography from '../../components/common/global-typography';
 import storeWithMiddleware from '../../../common/mockStore';
-import {
-	fetchTrustedList,
-	removeFromTrustedList,
-	selectLoadingTrustedList,
-	selectTrustedList
-} from '../../features/store/trusted-list';
+import { fetchTrustedList, removeFromTrustedList, selectTrustedList } from '../../features/store/trusted-list';
 import { useAppSelector } from '../../../event/store';
 import PopupContainer from '../../components/popup-container/popup-container.component';
 import TrustedListBottomLinks from '../../components/trusted-list-bottom-links/trusted-list-bottom-links.cpmponent';
 import * as Styled from '../../components/common/guard-points/guard-points.styled';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../../components/navigator/routes.utils';
+import { storageService } from '../../../api/services';
 
 interface ITrustedListPageProps {}
 
 const TrustedListPage: React.FC<ITrustedListPageProps> = () => {
 	const trustedList = useAppSelector(selectTrustedList) || [];
-	const isLoadingTrustedList = useAppSelector(selectLoadingTrustedList);
 	const navigate = useNavigate();
 
 	React.useEffect(() => {
@@ -32,10 +28,13 @@ const TrustedListPage: React.FC<ITrustedListPageProps> = () => {
 		storeWithMiddleware.then(({ dispatch }) => dispatch(fetchTrustedList()));
 	}, []);
 
-	const handleRemoveItem = async (id: string) => {
-		// @ts-ignore
-		await storeWithMiddleware.then(({ dispatch }) => dispatch(removeFromTrustedList({ id })));
-		// @ts-ignore
+	const handleRemoveItem = (id: string) => {
+		storeWithMiddleware
+			.then(({ dispatch }) => dispatch(removeFromTrustedList({ id })))
+			.then(() => {
+				storageService.removeTrustedListFromStorage();
+			});
+
 		storeWithMiddleware.then(({ dispatch }) => dispatch(fetchTrustedList()));
 	};
 

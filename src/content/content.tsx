@@ -1,7 +1,6 @@
 //@ts-nocheck
 import { useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '../event/store';
-import DangerousContentPage from './components/dangerous';
 import { getActiveTab, getSourceData, setSourceType } from './features/store/source/sourceSlice';
 import { defineIconName } from './utils/icon.util';
 import YoutubeContentPage from './components/youtube';
@@ -17,7 +16,7 @@ import { checkSourceType } from './features/store/source/actions';
 import { getOriginFromHref, removeWWW } from './utils/index.util';
 import { browser } from '../browser-service';
 import { selectIsAuth } from '../popup/features/store/auth';
-import WarningManagerComponent from './warning-manager.component';
+import MessageManagerComponent from './message-manager.component';
 
 const isSafeSuspect = (href: string) => {
 	const dangerousProtocol = ['javascript:'];
@@ -32,12 +31,11 @@ function ContentComponent() {
 	if (checkList.includes(cutHost) && (pathname.length > 1 || search)) {
 		cutHost = href;
 	}
-	const dispatch = useAppDispatch();
+
 	const sourceData = useAppSelector(getSourceData);
 	const activeTab = useAppSelector(getActiveTab);
 	const isAuth = useAppSelector(selectIsAuth);
 	const activeOrigin = getOriginFromHref(activeTab);
-
 	const handleCheckSourceType = (host: string) => {
 		// @ts-ignore
 		storeWithMiddleware.then(({ dispatch }) => dispatch(checkSourceType(host)));
@@ -69,7 +67,7 @@ function ContentComponent() {
 
 			{host === HOST_KEYS.YOUTUBE && <YoutubeContentPage />}
 			{host === HOST_KEYS.NIGHTHAWK_WEB_VERSION && <TokenManagerComponent />}
-			{href.includes(`${process.env.REACT_APP_NIGHTHAWK_WARNING}`) && <WarningManagerComponent />}
+			{href.includes(new URL(`${process.env.REACT_APP_NIGHTHAWK_WARNING}`).host) && <MessageManagerComponent />}
 			{host === HOST_KEYS.TWITTER && <TwitterContentPage />}
 			{host === HOST_KEYS.GOOGLE && <GoogleContentPage />}
 			{host === HOST_KEYS.FACEBOOK && <FacebookContentPage />}

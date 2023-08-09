@@ -66,6 +66,19 @@ export class StorageService {
 			browser.storage.local.set({ [STORAGE_KEYS.DANGER_AGREE_LIST]: Array.from(new Set(newList)) });
 		});
 	}
+
+	public async getTrustedListFromStorage() {
+		const data = await browser.storage.local.get(STORAGE_KEYS.TRUSTED_LIST);
+		return data[STORAGE_KEYS.TRUSTED_LIST];
+	}
+
+	public setTrustedListToStorage(list: ITrustedList[]) {
+		browser.storage.local.set({ [STORAGE_KEYS.TRUSTED_LIST]: list });
+	}
+
+	public removeTrustedListFromStorage() {
+		browser.storage.local.remove(STORAGE_KEYS.TRUSTED_LIST);
+	}
 }
 
 export const storageService = new StorageService();

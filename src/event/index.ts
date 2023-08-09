@@ -105,11 +105,11 @@ browser.runtime.onConnect.addListener((port) => {
 			storageService.setDangerAgreeListToStorage(msg.url);
 		});
 	}
-
 	if (port.name === process.env.REACT_APP_TRUSTED_LIST_WEB) {
 		port.onMessage.addListener((msg) => {
-			console.log('TRUSTED LIST WEB', msg);
-			if (msg.shouldUpdateCache) storageService.removeTrustedListFromStorage();
+			if (msg.shouldUpdateCache) {
+				storageService.removeTrustedListFromStorage();
+			}
 		});
 	}
 });
