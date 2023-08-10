@@ -19,7 +19,12 @@ console.log('BACKGROUND SCRIPT RUNNING');
 
 console.log('------------------- RELOAD -------------------');
 
-browser.runtime.onInstalled.addListener(function () {
+browser.runtime.onInstalled.addListener(function (detail) {
+	if (detail.reason === 'update') {
+		console.log('EXTENSION UPDATE');
+		return;
+	}
+
 	browser.tabs.create({
 		url: `${process.env.REACT_APP_WEB_URL}/welcome`,
 		active: true
@@ -89,6 +94,19 @@ browser.runtime.onConnect.addListener((port) => {
 	if (port.name === process.env.REACT_APP_WEB_GUARDIAN_POINTS) {
 		port.onMessage.addListener((msg) => {
 			storageService.setPointsToStorage(msg.points);
+		});
+	}
+
+	if (port.name === process.env.REACT_APP_DANGER_AGREE) {
+		port.onMessage.addListener((msg) => {
+			storageService.setDangerAgreeListToStorage(msg.url);
+		});
+	}
+	if (port.name === process.env.REACT_APP_TRUSTED_LIST_WEB) {
+		port.onMessage.addListener((msg) => {
+			if (msg.shouldUpdateCache) {
+				storageService.removeTrustedListFromStorage();
+			}
 		});
 	}
 });

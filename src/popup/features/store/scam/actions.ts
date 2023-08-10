@@ -57,7 +57,7 @@ export const checkScam = createAsyncThunk<ICheckScamResponse, ICheckScamRequest,
 				};
 			}
 
-			const data = await scamReportService.checkScam({ url });
+			const data = await scamReportService.checkScam({ url, type });
 			return {
 				type,
 				[url]: data?.status

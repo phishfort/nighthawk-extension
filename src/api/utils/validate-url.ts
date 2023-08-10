@@ -28,14 +28,20 @@ export function getValidUrl(url: string): string {
 				return searchParams.get('id') as string;
 			}
 
-			// look for id in group/, page/, people/
+			// look for id in group/, page/, people/ ...
 			const regexToFindId = /(?<=\/)(\d{14,})(?=\/|$)/;
 			const id = pathname.match(regexToFindId);
 			if (id && id[0]) {
 				return id[0];
 			}
 
-			return pathname.split('/').filter(Boolean)[0] || validUrl;
+			// look for username in group/, page/, people/ ...
+			const keyWords = ['groups', 'pages', 'people', 'events', 'marketplace'];
+			const arr = pathname.split('/').filter((el) => el && !keyWords.includes(el));
+			if (arr.length) {
+				return arr[0];
+			}
+			return validUrl;
 		}
 
 		// youtube
