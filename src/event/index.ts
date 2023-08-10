@@ -21,10 +21,7 @@ console.log('------------------- RELOAD -------------------');
 
 browser.runtime.onInstalled.addListener(function (detail) {
 	if (detail.reason === 'update') {
-		browser.tabs.create({
-			url: `${process.env.REACT_APP_WEB_URL}`,
-			active: true
-		});
+		console.log('EXTENSION UPDATE');
 		return;
 	}
 
