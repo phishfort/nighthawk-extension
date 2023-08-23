@@ -17,6 +17,7 @@ import { checkSourceType } from './features/store/source/actions';
 import { getOriginFromHref, removeWWW } from './utils/index.util';
 import { browser } from '../browser-service';
 import { selectIsAuth } from '../popup/features/store/auth';
+import MessageManagerComponent from './message-manager.component';
 
 function ContentComponent() {
 	const { host, href, pathname, search } = document.location;
@@ -31,6 +32,7 @@ function ContentComponent() {
 	const activeOrigin = getOriginFromHref(activeTab);
 
 	const handleCheckSourceType = (host: string) => {
+		// TODO: migrate to background to avoid CORS errors
 		storeWithMiddleware.then(({ dispatch }) => dispatch(checkSourceType(host)));
 	};
 
@@ -55,6 +57,7 @@ function ContentComponent() {
 			{sourceData && sourceData[cutHost] === EWebStatus.DANGEROUS && <DangerousContentPage />}
 			{host === HOST_KEYS.YOUTUBE && <YoutubeContentPage />}
 			{host === HOST_KEYS.NIGHTHAWK_WEB_VERSION && <TokenManagerComponent />}
+			{href.includes(new URL(`${process.env.REACT_APP_WEB_URL}`).host) && <MessageManagerComponent />}
 			{host === HOST_KEYS.TWITTER && <TwitterContentPage />}
 			{host === HOST_KEYS.GOOGLE && <GoogleContentPage />}
 			{host === HOST_KEYS.FACEBOOK && <FacebookContentPage />}
