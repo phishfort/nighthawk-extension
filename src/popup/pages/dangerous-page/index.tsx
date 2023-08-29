@@ -11,10 +11,11 @@ import { selectIsVerified } from '../../features/store/auth';
 
 const DangerousPage: React.FC = () => {
 	const isVerified = useAppSelector(selectIsVerified);
+	const [url, setUrl] = React.useState<string>('');
 
 	const HandleShutDown = () => {
 		browser.tabs.create({
-			url: EXTERNAL_ROUTES.SAFE_BROWSING
+			url: url ? `${EXTERNAL_ROUTES.SAFE_BROWSING}?url=${url}` : EXTERNAL_ROUTES.SAFE_BROWSING
 		});
 	};
 
@@ -22,6 +23,14 @@ const DangerousPage: React.FC = () => {
 		browser.tabs.goBack();
 	};
 
+	React.useEffect(() => {
+		browser.tabs.query({ active: true, currentWindow: true }).then((tabs) => {
+			const tab = tabs[0];
+			if (tab && tab.id) {
+				setUrl(tab.url || '');
+			}
+		});
+	}, []);
 	return (
 		<AuthWrapper Container={DangerousContainer} title={!isVerified ? 'SIGN IN' : ''} to={ROUTES.SIGN_IN} showBurger>
 			<Grid container direction="column" alignItems="center" justifyContent="center" mt="2rem">
