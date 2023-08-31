@@ -1,7 +1,7 @@
 import { wrapStore } from 'webext-redux';
 import { PORT_STORE_NAME } from '../common/constants/app-keys.const';
 import store from './store';
-import { storageService } from '../api/services';
+import { storageService, trustedListService } from '../api/services';
 import { setAuthData, signOut } from '../popup/features/store/auth';
 import { setActiveTab } from '../content/features/store/source/sourceSlice';
 import { browser, isMozilla } from '../browser-service';
@@ -106,6 +106,30 @@ browser.runtime.onConnect.addListener((port) => {
 		port.onMessage.addListener((msg) => {
 			if (msg.shouldUpdateCache) {
 				storageService.removeTrustedListFromStorage();
+			}
+		});
+	}
+
+	if (port.name === process.env.REACT_APP_LOAD_NIGHTHAWK_LIST) {
+		port.onMessage.addListener(async (msg) => {
+			const nighthawkList = await storageService.getNighthawkListFromStorage();
+			if (!nighthawkList) {
+				const resp = await fetch(process.env.REACT_APP_CDN_URL!)
+					.then((res) => res.json())
+					.catch((err) => {
+						console.log(err);
+					});
+				storageService.setNighthawkListToStorage(resp);
+			}
+		});
+	}
+	if (port.name === process.env.REACT_APP_LOAD_TRUST_LIST) {
+		port.onMessage.addListener(async (msg) => {
+			const trustedList = await storageService.getTrustedListFromStorage();
+			if (!trustedList) {
+				const resp = await trustedListService.getAllTrustedList();
+				if (!resp) return;
+				storageService.setTrustedListToStorage(resp);
 			}
 		});
 	}

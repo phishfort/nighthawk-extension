@@ -32,7 +32,8 @@ function ContentComponent() {
 	const activeOrigin = getOriginFromHref(activeTab);
 
 	const handleCheckSourceType = (host: string) => {
-		// TODO: migrate to background to avoid CORS errors
+		const port = browser?.runtime?.connect({ name: process.env.REACT_APP_LOAD_NIGHTHAWK_LIST });
+		port?.postMessage({ loadData: true });
 		storeWithMiddleware.then(({ dispatch }) => dispatch(checkSourceType(host)));
 	};
 
