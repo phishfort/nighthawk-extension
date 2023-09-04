@@ -29,6 +29,14 @@ browser.runtime.onInstalled.addListener(function (detail) {
 		url: `${process.env.REACT_APP_WEB_URL}/welcome`,
 		active: true
 	});
+
+	loadLists()
+		.then((lists) => {
+			console.log('SUCCESS LOADED LISTS ON INSTALL', lists);
+		})
+		.catch(() => {
+			console.log('FAILED TO LOAD LISTS ON INSTALL');
+		});
 });
 
 // redirect to feedback form on uninstalled
@@ -54,6 +62,18 @@ browser.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
 			tabId: sender?.tab?.id
 		});
 	}
+	if (msg.action === 'loadLists') {
+		loadLists()
+			.then((lists) => {
+				sendResponse(lists);
+				console.log('FINISHED LOADING LIST ON EXTENSION REQUEST');
+			})
+			.catch(() => {
+				console.log('FAILED TO LOAD LISTS ON EXTENSION REQUEST');
+			});
+		return true;
+	}
+
 	sendResponse({});
 	return true;
 });
@@ -106,30 +126,21 @@ browser.runtime.onConnect.addListener((port) => {
 		port.onMessage.addListener((msg) => {
 			if (msg.shouldUpdateCache) {
 				storageService.removeTrustedListFromStorage();
+				loadLists()
+					.then(() => {
+						console.log('SUCCESS LOADED LISTS ON WEB REQUEST');
+					})
+					.catch(() => {
+						console.log('FAILED TO LOAD LISTS ON WEB REQUEST');
+					});
 			}
 		});
 	}
 
 	if (port.name === process.env.REACT_APP_LOAD_NIGHTHAWK_LIST) {
 		port.onMessage.addListener(async (msg) => {
-			const nighthawkList = await storageService.getNighthawkListFromStorage();
-			if (!nighthawkList) {
-				const resp = await fetch(process.env.REACT_APP_CDN_URL!)
-					.then((res) => res.json())
-					.catch((err) => {
-						console.log(err);
-					});
-				storageService.setNighthawkListToStorage(resp);
-			}
-		});
-	}
-	if (port.name === process.env.REACT_APP_LOAD_TRUST_LIST) {
-		port.onMessage.addListener(async (msg) => {
-			const trustedList = await storageService.getTrustedListFromStorage();
-			if (!trustedList) {
-				const resp = await trustedListService.getAllTrustedList();
-				if (!resp) return;
-				storageService.setTrustedListToStorage(resp);
+			if (msg.shouldLoadLists) {
+				loadLists();
 			}
 		});
 	}
@@ -164,4 +175,40 @@ if (!isMozilla) {
 		port.onDisconnect.addListener(deleteTimer);
 		port._timer = setTimeout(forceReconnect, 4 * 1000 * 60, port);
 	});
+}
+
+async function loadLists() {
+	console.log('LOAD LISTS');
+	let nighthawkList = await storageService.getNighthawkListFromStorage();
+	let trustedList = await storageService.getTrustedListFromStorage();
+	const token = await storageService.getTokenFromStorage();
+
+	if (!nighthawkList) {
+		const resp = await fetch(process.env.REACT_APP_CDN_URL!)
+			.then((res) => res.json())
+			.catch((err) => {
+				console.log(err);
+			});
+		nighthawkList = resp;
+		storageService.setNighthawkListToStorage(resp);
+	}
+
+	if (!trustedList && token) {
+		const resp = await fetch(`${process.env.REACT_APP_BACKEND_URL}/user/my-trusted`, {
+			headers: {
+				Authorization: `Bearer ${token}`
+			}
+		})
+			.then((res) => res.json())
+			.catch((err) => {
+				console.log(err);
+			});
+		trustedList = resp;
+		storageService.setTrustedListToStorage(resp);
+	}
+
+	return {
+		nighthawkList,
+		trustedList
+	};
 }

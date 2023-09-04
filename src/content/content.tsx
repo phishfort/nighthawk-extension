@@ -32,8 +32,7 @@ function ContentComponent() {
 	const activeOrigin = getOriginFromHref(activeTab);
 
 	const handleCheckSourceType = (host: string) => {
-		const port = browser?.runtime?.connect({ name: process.env.REACT_APP_LOAD_NIGHTHAWK_LIST });
-		port?.postMessage({ loadData: true });
+		browser.runtime.sendMessage({ action: 'loadLists' });
 		storeWithMiddleware.then(({ dispatch }) => dispatch(checkSourceType(host)));
 	};
 

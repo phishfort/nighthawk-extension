@@ -6,6 +6,7 @@ import { storageService } from './storage.service';
 import { HttpService } from './http.service';
 import { ITrustedList } from '../../popup/pages/trusted-list-page/trusted-list.types';
 import { getValidUrl } from '../utils/validate-url';
+import { browser } from '../../browser-service';
 
 const CDN_URL = process.env.REACT_APP_CDN_URL!;
 
@@ -24,8 +25,11 @@ class ScamReportService {
 		// check if url is in nighthawk list
 		let nighthawkList = await storageService.getNighthawkListFromStorage();
 		if (!nighthawkList) {
-			const port = browser?.runtime?.connect({ name: process.env.REACT_APP_LOAD_NIGHTHAWK_LIST });
-			port?.postMessage({ loadData: true });
+			browser.runtime.sendMessage({ action: 'loadLists' }, (response) => {
+				if (response.nighthawkList) {
+					nighthawkList = response.nighthawkList;
+				}
+			});
 		}
 
 		let isDangerous = false;
@@ -98,8 +102,11 @@ class ScamReportService {
 		if (token) {
 			let trustedList = await storageService.getTrustedListFromStorage();
 			if (!trustedList) {
-				const port = browser?.runtime?.connect({ name: process.env.REACT_APP_LOAD_TRUST_LIST });
-				port?.postMessage({ loadData: true });
+				browser.runtime.sendMessage({ action: 'loadLists' }, (response) => {
+					if (response.trustedList) {
+						trustedList = response.trustedList;
+					}
+				});
 			}
 
 			trustedList.forEach((tl: ITrustedList) => {

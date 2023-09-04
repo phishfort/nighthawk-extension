@@ -24,7 +24,8 @@ export const SOC_MEDIA = {
 
 export const HOST_KEYS = {
 	...SOC_MEDIA,
-	NIGHTHAWK_WEB_VERSION: 'nighthawk-dashboard.phishfort.com',
+	// NIGHTHAWK_WEB_VERSION: 'nighthawk-dashboard.phishfort.com',
+	NIGHTHAWK_WEB_VERSION: 'night-hawk-ui-dev.herokuapp.com',
 	GOOGLE: 'www.google.com'
 };
 
