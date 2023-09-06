@@ -15,7 +15,7 @@ const DangerousPage: React.FC = () => {
 
 	const HandleShutDown = () => {
 		browser.tabs.create({
-			url: url ? `${EXTERNAL_ROUTES.SAFE_BROWSING}?url=${url}` : EXTERNAL_ROUTES.SAFE_BROWSING
+			url: url ? `${EXTERNAL_ROUTES.SAFE_BROWSING}&url=${url}` : EXTERNAL_ROUTES.SAFE_BROWSING
 		});
 	};
 
