@@ -18,6 +18,9 @@ const DangerousContentPage: React.FC = () => {
 		setDangerousAgree(true);
 	};
 
+	const anchor = document.getElementById('nighthawk-content-anchor');
+	if (anchor) anchor.style.display = 'block';
+
 	return (
 		<>
 			<Styled.Image src={browser?.runtime?.getURL('static/media/bg-dangerous.39b283a19dfc48dacc0b.png')} />

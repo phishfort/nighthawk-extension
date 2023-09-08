@@ -12,6 +12,7 @@ import { browser } from '../browser-service';
 
 const anchor = document.createElement('div');
 anchor.id = 'nighthawk-content-anchor';
+anchor.style.display = 'none';
 document.body.insertBefore(anchor, document.body.childNodes[0]);
 
 ReactDOM.render(
