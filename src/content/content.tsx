@@ -32,7 +32,6 @@ function ContentComponent() {
 	const activeOrigin = getOriginFromHref(activeTab);
 
 	const handleCheckSourceType = (host: string) => {
-		browser.runtime.sendMessage({ action: 'loadLists' });
 		storeWithMiddleware.then(({ dispatch }) => dispatch(checkSourceType(host)));
 	};
 

@@ -87,3 +87,6 @@ export function getValidUrl(url: string): string {
 
 	return validUrl;
 }
+
+export const CACHE_TIME = 30 * 60 * 1000; // 30 minutes
+export const REFETCH_TIME = CACHE_TIME - 5 * 60 * 1000;
