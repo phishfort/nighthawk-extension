@@ -1,7 +1,8 @@
+//@ts-nocheck
 import * as React from 'react';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FormikProvider, useFormik } from 'formik';
+import { FormikProvider, useFormik, useFormikContext } from 'formik';
 import { FormSelectProps } from '../../components/common/form-field-container/types';
 import { Select } from '../../components/common/select/select';
 import PopupContainer from '../../components/popup-container/popup-container.component';
@@ -33,6 +34,14 @@ import { IUserInfo } from '../../../api/types/profile.types';
 
 const MAX_STEPS = 2;
 
+const SaveFromikState = () => {
+	const { values } = useFormikContext();
+	const activeTab = useAppSelector(getActiveTab);
+	useEffect(() => {
+		localStorage.setItem('scamFormValues' + activeTab, JSON.stringify(values));
+	}, [values]);
+};
+
 const ScamReportPage: React.FC = () => {
 	const navigate = useNavigate();
 	const isVerified = useAppSelector(selectIsVerified);
@@ -55,6 +64,9 @@ const ScamReportPage: React.FC = () => {
 	const [selectedValue, setSelectedValue] = React.useState<FormSelectProps | null>(initSelectValue);
 	const type = selectedValue?.value as EType;
 	const userInfo: IUserInfo = useAppSelector(selectUserInfo) || {};
+	const fromStore = localStorage.getItem('scamFormValues' + activeTab);
+	const [savedFormValues, setSavedFormValues] = useState<any>(JSON.parse(fromStore));
+
 	const getUserInfo = async () => {
 		const { dispatch } = await storeWithMiddleware;
 		// @ts-ignore
@@ -68,20 +80,25 @@ const ScamReportPage: React.FC = () => {
 
 		getUserInfo();
 	}, []);
+	useEffect(() => {
+		setSavedFormValues(JSON.parse(fromStore));
+	}, [fromStore]);
 
-	const initialValues = {
-		type: EType.WEBSITE,
-		url: initUrl,
-		impersonatedUrl: '',
-		comment: ''
-	};
+	const initialValues = savedFormValues
+		? { ...savedFormValues }
+		: {
+				type: EType.WEBSITE,
+				url: initUrl,
+				impersonatedUrl: '',
+				comment: '',
+				email: userInfo?.email || ''
+		  };
 
 	const formik = useFormik({
 		initialValues,
-		onSubmit: ({ url, impersonatedUrl, comment }, { resetForm }) => {
+		onSubmit: ({ url, impersonatedUrl, comment, email }, { resetForm }) => {
 			storeWithMiddleware
 				.then(({ dispatch }) =>
-					// @ts-ignore
 					dispatch(
 						(isVerified ? addToScam : addToScamGuest)({
 							type,
@@ -89,11 +106,15 @@ const ScamReportPage: React.FC = () => {
 							impersonatedUrl,
 							userId: userInfo.id,
 							comment,
+							email,
 							label: selectedValue?.label
 						})
 					)
 				)
-				.then(() => (isVerified ? navigate(ROUTES.YOUR_ACCOUNT) : navigate(ROUTES.ADDED_TO_SCAM)));
+				.then(() => {
+					localStorage.removeItem('scamFormValues' + activeTab);
+					isVerified ? navigate(ROUTES.YOUR_ACCOUNT) : navigate(ROUTES.ADDED_TO_SCAM);
+				});
 			resetForm();
 		},
 		validationSchema: validationSchema(true)
@@ -161,6 +182,7 @@ const ScamReportPage: React.FC = () => {
 							/>
 						) : null}
 					</form>
+					<SaveFromikState />
 				</FormikProvider>
 			</Grid>
 		</PopupContainer>

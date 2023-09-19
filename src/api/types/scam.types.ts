@@ -7,6 +7,7 @@ export interface IReportScam {
 	comment?: string;
 	impersonatedUrl?: string;
 	userId?: string;
+	email?: string;
 }
 
 export interface Iuuid {

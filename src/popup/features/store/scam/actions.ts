@@ -13,13 +13,14 @@ export interface ICheckScamRequest {
 
 export const addToScam = createAsyncThunk<IReportScam, IReportScam, { rejectValue: SerializedError }>(
 	`${REDUCERS_NAMES.SCAM}/${SCAM_ACTIONS_TYPES.ADD_SCAM}`,
-	async ({ type, userId, url, impersonatedUrl, comment }, { rejectWithValue }) => {
+	async ({ type, userId, url, impersonatedUrl, comment, email }, { rejectWithValue }) => {
 		try {
 			await scamReportService.addScamReport({
 				type,
 				url,
 				impersonatedUrl,
 				userId,
+				email,
 				comment
 			});
 			return { type, url };
@@ -31,11 +32,12 @@ export const addToScam = createAsyncThunk<IReportScam, IReportScam, { rejectValu
 
 export const addToScamGuest = createAsyncThunk<IReportScam, IReportScam, { rejectValue: SerializedError }>(
 	`${REDUCERS_NAMES.SCAM}/${SCAM_ACTIONS_TYPES.ADD_SCAM}`,
-	async ({ type, url, impersonatedUrl, comment, label }, { rejectWithValue }) => {
+	async ({ type, url, impersonatedUrl, comment, label, email }, { rejectWithValue }) => {
 		try {
-			await scamReportService.addScamReportGuest({
+			await scamReportService.addScamReport({
 				type,
 				url,
+				email,
 				impersonatedUrl,
 				comment
 			});

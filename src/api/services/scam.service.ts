@@ -7,14 +7,33 @@ import { HttpService } from './http.service';
 import { ITrustedList } from '../../popup/pages/trusted-list-page/trusted-list.types';
 import { getValidUrl } from '../utils/validate-url';
 import { browser } from '../../browser-service';
-
-const CDN_URL = process.env.REACT_APP_CDN_URL!;
+import axios from 'axios';
 
 class ScamReportService {
 	constructor(private authHttpService: EnhancedWithAuthHttpService, private httpService: HttpService) {}
 
 	async addScamReport(data: IReportScam) {
-		return this.authHttpService.post<Iuuid, IReportScam>('user/report-list', data);
+		try {
+			const type = data.type === EType.WEBSITE ? data.type : 'social';
+			await axios.post(
+				process.env.REACT_APP_HARVESTER_API_URL!,
+				{
+					url: data.url,
+					safeDomain: data.impersonatedUrl,
+					reportedBy: data.email,
+					reasoning: data.comment,
+					source: 'nighthawk',
+					incidentType: type
+				},
+				{
+					headers: {
+						'x-api-key': process.env.REACT_APP_HARVESTER_API_KEY!
+					}
+				}
+			);
+		} catch (e) {
+			console.log('Failed to add scam report');
+		}
 	}
 
 	async addScamReportGuest(data: IReportScam) {
