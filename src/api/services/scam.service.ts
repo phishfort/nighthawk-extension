@@ -4,10 +4,9 @@ import { HttpFactoryService } from './http-factory.service';
 import { ECheckDataType, EType, EWebStatus, ICheckScamResponse } from '../types';
 import { storageService } from './storage.service';
 import { HttpService } from './http.service';
-import axios from 'axios';
-import { INighthawkResponse, ITrustedList } from '../../popup/pages/trusted-list-page/trusted-list.types';
+import { ITrustedList } from '../../popup/pages/trusted-list-page/trusted-list.types';
 import { getValidUrl } from '../utils/validate-url';
-import { trustedListService } from './trusted-list.service';
+import { browser } from '../../browser-service';
 
 const CDN_URL = process.env.REACT_APP_CDN_URL!;
 
@@ -26,9 +25,11 @@ class ScamReportService {
 		// check if url is in nighthawk list
 		let nighthawkList = await storageService.getNighthawkListFromStorage();
 		if (!nighthawkList) {
-			const resp = await axios.get<INighthawkResponse>(CDN_URL);
-			nighthawkList = resp.data;
-			storageService.setNighthawkListToStorage(nighthawkList);
+			browser.runtime.sendMessage({ action: 'loadLists' }, (response) => {
+				if (response.nighthawkList) {
+					nighthawkList = response.nighthawkList;
+				}
+			});
 		}
 
 		let isDangerous = false;
@@ -97,20 +98,26 @@ class ScamReportService {
 			});
 		}
 
-		let trustedList = await storageService.getTrustedListFromStorage();
-		if (!trustedList) {
-			trustedList = await trustedListService.getAllTrustedList();
-			storageService.setTrustedListToStorage(trustedList);
-		}
-
-		trustedList.forEach((tl: ITrustedList) => {
-			const trustedListUrl = getValidUrl(tl.url);
-			const item = trustedListUrl && trustedListUrl.toLowerCase() === getValidUrl(data.url).toLowerCase();
-			if (item) {
-				isSafe = true;
-				return;
+		const token = await storageService.getTokenFromStorage();
+		if (token) {
+			let trustedList = await storageService.getTrustedListFromStorage();
+			if (!trustedList) {
+				browser.runtime.sendMessage({ action: 'loadLists' }, (response) => {
+					if (response.trustedList) {
+						trustedList = response.trustedList;
+					}
+				});
 			}
-		});
+
+			trustedList.forEach((tl: ITrustedList) => {
+				const trustedListUrl = getValidUrl(tl.url);
+				const item = trustedListUrl && trustedListUrl.toLowerCase() === getValidUrl(data.url).toLowerCase();
+				if (item) {
+					isSafe = true;
+					return;
+				}
+			});
+		}
 
 		if (isDangerous) return { status: EWebStatus.DANGEROUS };
 		if (isSafe) return { status: EWebStatus.SAFE };

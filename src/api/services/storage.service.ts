@@ -1,9 +1,7 @@
 import { STORAGE_KEYS } from '../../common/constants/app-keys.const';
 import { browser } from '../../browser-service';
 import { INighthawkResponse, ITrustedList } from '../../popup/pages/trusted-list-page/trusted-list.types';
-
-const CACHE_TIME = 10 * 60 * 1000; // 10 minutes
-
+import { CACHE_TIME } from '../utils/validate-url';
 export class StorageService {
 	public setTokenToStorage(token: string) {
 		browser.storage.local.set({ [STORAGE_KEYS.TOKEN]: token });
@@ -54,7 +52,9 @@ export class StorageService {
 	public setNighthawkListToStorage(list: INighthawkResponse) {
 		browser.storage.local.set({ [STORAGE_KEYS.NIGHTHAWK_LIST]: list, [STORAGE_KEYS.NH_CACHE_TIME]: Date.now() });
 	}
-
+	public removeNighthawkLists() {
+		browser.storage.local.remove(STORAGE_KEYS.NIGHTHAWK_LIST);
+	}
 	public async getDangerAgreeListFromStorage() {
 		const data = await browser.storage.local.get(STORAGE_KEYS.DANGER_AGREE_LIST);
 		return data[STORAGE_KEYS.DANGER_AGREE_LIST];

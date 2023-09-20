@@ -32,7 +32,6 @@ function ContentComponent() {
 	const activeOrigin = getOriginFromHref(activeTab);
 
 	const handleCheckSourceType = (host: string) => {
-		// TODO: migrate to background to avoid CORS errors
 		storeWithMiddleware.then(({ dispatch }) => dispatch(checkSourceType(host)));
 	};
 

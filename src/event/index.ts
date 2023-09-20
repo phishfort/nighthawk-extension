@@ -6,6 +6,7 @@ import { setAuthData, signOut } from '../popup/features/store/auth';
 import { setActiveTab } from '../content/features/store/source/sourceSlice';
 import { browser, isMozilla } from '../browser-service';
 import { setGuestGuardianPoints } from '../popup/features/store/user';
+import { REFETCH_TIME } from '../api/utils/validate-url';
 
 browser.runtime.onConnect.addListener(function () {
 	console.log('connect!!!');
@@ -20,15 +21,22 @@ console.log('BACKGROUND SCRIPT RUNNING');
 console.log('------------------- RELOAD -------------------');
 
 browser.runtime.onInstalled.addListener(function (detail) {
-	if (detail.reason === 'update') {
-		console.log('EXTENSION UPDATE');
-		return;
+	if (detail.reason === 'install') {
+		browser.tabs.create({
+			url: `${process.env.REACT_APP_WEB_URL}/welcome`,
+			active: true
+		});
+
+		loadLists()
+			.then(() => {
+				console.log('SUCCESS LOADED LISTS ON INSTALL');
+			})
+			.catch(() => {
+				console.log('FAILED TO LOAD LISTS ON INSTALL');
+			});
 	}
 
-	browser.tabs.create({
-		url: `${process.env.REACT_APP_WEB_URL}/welcome`,
-		active: true
-	});
+	return;
 });
 
 // redirect to feedback form on uninstalled
@@ -54,6 +62,30 @@ browser.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
 			tabId: sender?.tab?.id
 		});
 	}
+	if (msg.action === 'loadLists') {
+		loadLists()
+			.then((lists) => {
+				sendResponse(lists);
+				console.log('FINISHED LOADING LIST ON EXTENSION REQUEST');
+			})
+			.catch(() => {
+				console.log('FAILED TO LOAD LISTS ON EXTENSION REQUEST');
+			});
+		return true;
+	}
+
+	if (msg.action === 'refetchLists') {
+		loadLists()
+			.then((lists) => {
+				sendResponse(lists);
+				console.log('FINISHED REFETCHING LIST ON EXTENSION REQUEST');
+			})
+			.catch(() => {
+				console.log('FAILED TO REFETCH LISTS ON EXTENSION REQUEST');
+			});
+		return true;
+	}
+
 	sendResponse({});
 	return true;
 });
@@ -106,6 +138,21 @@ browser.runtime.onConnect.addListener((port) => {
 		port.onMessage.addListener((msg) => {
 			if (msg.shouldUpdateCache) {
 				storageService.removeTrustedListFromStorage();
+				loadLists()
+					.then(() => {
+						console.log('SUCCESS LOADED LISTS ON WEB REQUEST');
+					})
+					.catch(() => {
+						console.log('FAILED TO LOAD LISTS ON WEB REQUEST');
+					});
+			}
+		});
+	}
+
+	if (port.name === process.env.REACT_APP_LOAD_NIGHTHAWK_LIST) {
+		port.onMessage.addListener(async (msg) => {
+			if (msg.shouldLoadLists) {
+				loadLists();
 			}
 		});
 	}
@@ -140,4 +187,54 @@ if (!isMozilla) {
 		port.onDisconnect.addListener(deleteTimer);
 		port._timer = setTimeout(forceReconnect, 4 * 1000 * 60, port);
 	});
+}
+
+// Refetch lists
+setInterval(() => {
+	console.log('time to refetch');
+
+	storageService.removeTrustedListFromStorage();
+	storageService.removeNighthawkLists();
+
+	loadLists()
+		.then(() => {
+			console.log('Refetch lists');
+		})
+		.catch((err) => console.log('error-> ', err));
+}, REFETCH_TIME);
+
+async function loadLists() {
+	let nighthawkList = await storageService.getNighthawkListFromStorage();
+	let trustedList = await storageService.getTrustedListFromStorage();
+	const token = await storageService.getTokenFromStorage();
+
+	if (!nighthawkList) {
+		const resp = await fetch(process.env.REACT_APP_CDN_URL!)
+			.then((res) => res.json())
+			.catch((err) => {
+				console.log(err);
+			});
+		nighthawkList = resp;
+		storageService.setNighthawkListToStorage(resp);
+	}
+	//TODO: split this
+
+	if (!trustedList && token) {
+		const resp = await fetch(`${process.env.REACT_APP_BACKEND_URL}/user/my-trusted`, {
+			headers: {
+				Authorization: `Bearer ${token}`
+			}
+		})
+			.then((res) => res.json())
+			.catch((err) => {
+				console.log(err);
+			});
+		trustedList = resp;
+		storageService.setTrustedListToStorage(resp);
+	}
+
+	return {
+		nighthawkList,
+		trustedList
+	};
 }
