@@ -45,8 +45,10 @@
 	},
 	"scripts": {
 		"start": "react-scripts start",
+		"prebuild": "node scripts/pre-build.js",
+		"postbuild": "node scripts/post-build.js",
 		"build": "env-cmd -f .env craco build",
-		"build-v2": "set REACT_APP_MANIFEST_VERSION_V2=true && env-cmd -f .env craco build",
+		"build-v2": "REACT_APP_MANIFEST_VERSION_V2=true env-cmd -f .env craco build",
 		"build-witout-side-servers": "INLINE_RUNTIME_CHUNK=false craco build",
 		"test": "react-scripts test",
 		"eject": "react-scripts eject",

@@ -3,15 +3,9 @@
 	"description": "Protect yourself from phishing attacks.",
 	"version": "1.0.1.15",
 	"manifest_version": 3,
-	"icons": {
-		"24": "/assets/logo/ic-nighthawk-trusted.png",
-		"48": "/assets/logo/ic-nighthawk-trusted.png"
-	},
+	"icons": { "24": "/assets/logo/ic-nighthawk-trusted.png", "48": "/assets/logo/ic-nighthawk-trusted.png" },
 	"action": {
-		"default_icon": {
-			"24": "/assets/logo/ic-nighthawk-unknown.png",
-			"48": "/assets/logo/ic-nighthawk-unknown.png"
-		},
+		"default_icon": { "24": "/assets/logo/ic-nighthawk-unknown.png", "48": "/assets/logo/ic-nighthawk-unknown.png" },
 		"default_popup": "index.html",
 		"default_title": "Nighthawk by PhishFort"
 	},
@@ -24,15 +18,9 @@
 			"run_at": "document_end"
 		}
 	],
-	"background": {
-		"service_worker": "./static/js/event.js"
-	},
+	"background": { "service_worker": "./static/js/event.js" },
 	"permissions": ["activeTab", "tabs", "unlimitedStorage", "storage"],
 	"host_permissions": ["*://*/*"],
-	"web_accessible_resources": [
-		{
-			"resources": ["static/media/*.png"],
-			"matches": ["http://*/*", "https://*/*"]
-		}
-	]
+	"web_accessible_resources": [{ "resources": ["static/media/*.png"], "matches": ["http://*/*", "https://*/*"] }],
+	"key": "$CRX_KEY"
 }
