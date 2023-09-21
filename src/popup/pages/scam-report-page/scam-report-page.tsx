@@ -34,16 +34,20 @@ import { IUserInfo } from '../../../api/types/profile.types';
 
 const MAX_STEPS = 2;
 
-const SaveFromikState = () => {
+const SaveFormikState = ({ selectedType }) => {
 	const { values } = useFormikContext();
 	const activeTab = useAppSelector(getActiveTab);
 	useEffect(() => {
-		localStorage.setItem('scamFormValues' + activeTab, JSON.stringify(values));
-	}, [values]);
+		const savedFormValues = { ...values, type: selectedType };
+		localStorage.setItem('scamFormValues' + activeTab, JSON.stringify(savedFormValues));
+	}, [values, selectedType, activeTab]);
+
+	return null;
 };
 
 const ScamReportPage: React.FC = () => {
 	const navigate = useNavigate();
+	const userInfo: IUserInfo = useAppSelector(selectUserInfo);
 	const isVerified = useAppSelector(selectIsVerified);
 	const isScamLoading = useAppSelector(selectIsScamLoading);
 	const activeTab = useAppSelector(getActiveTab);
@@ -52,9 +56,12 @@ const ScamReportPage: React.FC = () => {
 	const blackList = useAppSelector(selectBlackList);
 	const [customErrors, setCustomErrors] = useState<boolean>(false);
 	const [currentStep, { canGoToNextStep, reset, setStep }] = useStep(MAX_STEPS);
+	const fromStore = localStorage.getItem('scamFormValues' + activeTab);
+	const [savedFormValues, setSavedFormValues] = useState<any>(JSON.parse(fromStore));
 
 	const isNotWebsite = !activeTab?.includes('http') || Object.values(SOC_MEDIA).some((el) => activeTab?.includes(el));
 	const initUrl = isNotWebsite ? '' : activeTab;
+
 	const initSelectValue = isNotWebsite
 		? null
 		: {
@@ -63,39 +70,50 @@ const ScamReportPage: React.FC = () => {
 		  };
 	const [selectedValue, setSelectedValue] = React.useState<FormSelectProps | null>(initSelectValue);
 	const type = selectedValue?.value as EType;
-	const userInfo: IUserInfo = useAppSelector(selectUserInfo) || {};
-	const fromStore = localStorage.getItem('scamFormValues' + activeTab);
-	const [savedFormValues, setSavedFormValues] = useState<any>(JSON.parse(fromStore));
 
-	const getUserInfo = async () => {
-		const { dispatch } = await storeWithMiddleware;
-		// @ts-ignore
-		dispatch(fetchUserInfo());
+	const handleChange = (e: any) => {
+		const changedValue: FormSelectProps = options.find((item) => item.value === e) || {
+			label: 'Not found',
+			value: 'not_found'
+		};
+
+		setSelectedValue(changedValue);
+		setStep(2);
+
+		formik.setFieldValue('url', '');
 	};
 
 	useEffect(() => {
-		storeWithMiddleware
-			// @ts-ignore
-			.then(({ dispatch }) => dispatch(fetchNighthawkGreyList()));
+		const typeSelected = options.find((_) => _.value === savedFormValues?.type);
+		setSelectedValue(typeSelected);
 
-		getUserInfo();
+		storeWithMiddleware.then(({ dispatch }) => dispatch(fetchUserInfo()));
+		storeWithMiddleware.then(({ dispatch }) => dispatch(fetchNighthawkGreyList()));
 	}, []);
+
+	useEffect(() => {
+		if (initSelectValue && currentStep !== 2) {
+			setStep(2);
+		}
+
+		storeWithMiddleware.then(({ dispatch }) => dispatch(fetchNighthawkWhiteList(type)));
+		storeWithMiddleware.then(({ dispatch }) => dispatch(fetchNighthawkBlackList(type)));
+	}, [type]);
+
 	useEffect(() => {
 		setSavedFormValues(JSON.parse(fromStore));
 	}, [fromStore]);
 
-	const initialValues = savedFormValues
-		? { ...savedFormValues }
-		: {
-				type: EType.WEBSITE,
-				url: initUrl,
-				impersonatedUrl: '',
-				comment: '',
-				email: userInfo?.email || ''
-		  };
+	const initialValues = {
+		type: EType.WEBSITE,
+		url: initUrl,
+		impersonatedUrl: '',
+		comment: '',
+		email: userInfo?.email || ''
+	};
 
 	const formik = useFormik({
-		initialValues,
+		initialValues: savedFormValues ? savedFormValues : initialValues,
 		onSubmit: ({ url, impersonatedUrl, comment, email }, { resetForm }) => {
 			storeWithMiddleware
 				.then(({ dispatch }) =>
@@ -119,31 +137,6 @@ const ScamReportPage: React.FC = () => {
 		},
 		validationSchema: validationSchema(true)
 	});
-
-	const handleChange = (e: any) => {
-		const changedValue: FormSelectProps = options.find((item) => item.value === e) || {
-			label: 'Not found',
-			value: 'not_found'
-		};
-
-		setSelectedValue(changedValue);
-		setStep(2);
-
-		formik.setFieldValue('url', '');
-	};
-
-	useEffect(() => {
-		if (initSelectValue && currentStep !== 2) {
-			setStep(2);
-		}
-
-		storeWithMiddleware
-			// @ts-ignore
-			.then(({ dispatch }) => dispatch(fetchNighthawkWhiteList(type)));
-		storeWithMiddleware
-			// @ts-ignore
-			.then(({ dispatch }) => dispatch(fetchNighthawkBlackList(type)));
-	}, [type]);
 
 	const { url } = formik.values;
 	useEffect(() => {
@@ -182,7 +175,7 @@ const ScamReportPage: React.FC = () => {
 							/>
 						) : null}
 					</form>
-					<SaveFromikState />
+					<SaveFormikState selectedType={selectedValue?.value} />
 				</FormikProvider>
 			</Grid>
 		</PopupContainer>
