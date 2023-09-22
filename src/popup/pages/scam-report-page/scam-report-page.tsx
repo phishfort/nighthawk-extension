@@ -108,13 +108,12 @@ const ScamReportPage: React.FC = () => {
 		type: EType.WEBSITE,
 		url: initUrl,
 		impersonatedUrl: '',
-		comment: '',
-		email: userInfo?.email || ''
+		comment: ''
 	};
 
 	const formik = useFormik({
 		initialValues: savedFormValues ? savedFormValues : initialValues,
-		onSubmit: ({ url, impersonatedUrl, comment, email }, { resetForm }) => {
+		onSubmit: ({ url, impersonatedUrl, comment }, { resetForm }) => {
 			storeWithMiddleware
 				.then(({ dispatch }) =>
 					dispatch(
@@ -124,7 +123,6 @@ const ScamReportPage: React.FC = () => {
 							impersonatedUrl,
 							userId: userInfo.id,
 							comment,
-							email,
 							label: selectedValue?.label
 						})
 					)

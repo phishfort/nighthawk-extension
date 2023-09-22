@@ -21,8 +21,6 @@ export const getStrictOptionalUrlValidator = (isScam?: boolean) =>
 	);
 
 export const getUrlValidator = () => getOptionalUrlValidator().required('URL is required.');
-export const getImpersonatedUrlValidator = () => getOptionalUrlValidator().required('ImpersonatedUrl is required');
-export const getEmailValidator = () => getOptionalUrlValidator().required('Email is required').email('Email not valid');
 
 export const getStrictUrlValidator = (isScam?: boolean) =>
 	getStrictOptionalUrlValidator(isScam).required('URL is required.');

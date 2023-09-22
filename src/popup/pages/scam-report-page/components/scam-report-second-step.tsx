@@ -56,9 +56,6 @@ const ScamReportForm: React.FC<IProps> = ({
 					passedValue=""
 				/>
 			</Grid>
-			<Grid item minWidth="100%">
-				<FormInput placeholder="Your email address" type="text" name="email" passedValue="" />
-			</Grid>
 			<Grid mt="0.5rem">
 				<HexagonBtn title="Send Report" width="250px" isDisabled={!isValidButton} />
 			</Grid>
