@@ -209,7 +209,11 @@ async function loadLists() {
 	const token = await storageService.getTokenFromStorage();
 
 	if (!nighthawkList) {
-		const resp = await fetch(process.env.REACT_APP_CDN_URL!)
+		const resp = await fetch(process.env.REACT_APP_CDN_URL!, {
+			headers: {
+				'x-api-key': process.env.REACT_APP_NIGHTHAWK_API_KEY!
+			}
+		})
 			.then((res) => res.json())
 			.catch((err) => {
 				console.log(err);

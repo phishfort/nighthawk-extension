@@ -8,7 +8,11 @@ class NighthawkListService {
 
 	async getNighthawkWhiteList(type?: EType) {
 		const queryString = type ? `?type=${type}` : '';
-		const response = await axios.get(process.env.REACT_APP_CDN_URL + queryString);
+		const response = await axios.get(process.env.REACT_APP_CDN_URL + queryString, {
+			headers: {
+				'x-api-key': process.env.REACT_APP_NIGHTHAWK_API_KEY!
+			}
+		});
 		let data: INighthawkList[] = [];
 
 		// format trustlist data as INighthawkList[]
@@ -30,7 +34,11 @@ class NighthawkListService {
 
 	async getNighthawkBlackList(type?: EType) {
 		const queryString = type ? `?type=${type}` : '';
-		const response = await axios.get(process.env.REACT_APP_CDN_URL + queryString);
+		const response = await axios.get(process.env.REACT_APP_CDN_URL + queryString, {
+			headers: {
+				'x-api-key': process.env.REACT_APP_NIGHTHAWK_API_KEY!
+			}
+		});
 		let data: INighthawkList[] = [];
 
 		// format blacklist data as INighthawkList[]
