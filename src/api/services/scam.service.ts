@@ -33,15 +33,6 @@ class ScamReportService {
 		let isDangerous = false;
 		let isSafe = false;
 
-		// check if url is in danger agree list
-		const dangerAgreeList = await storageService.getDangerAgreeListFromStorage();
-		if (dangerAgreeList && dangerAgreeList?.length > 0) {
-			const item = dangerAgreeList.find(
-				(item: string) => getValidUrl(item).toLowerCase() === getValidUrl(data.url).toLowerCase()
-			);
-			if (item) return { status: EWebStatus.UNKNOWN };
-		}
-
 		// search in type only
 		if (data.type) {
 			let key = '';
