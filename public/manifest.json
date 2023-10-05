@@ -1,7 +1,7 @@
 {
 	"name": "Nighthawk by PhishFort",
 	"description": "Protect yourself from phishing attacks.",
-	"version": "1.0.1.15",
+	"version": "1.0.1.16",
 	"manifest_version": 3,
 	"icons": { "24": "/assets/logo/ic-nighthawk-trusted.png", "48": "/assets/logo/ic-nighthawk-trusted.png" },
 	"action": {

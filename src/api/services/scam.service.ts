@@ -8,8 +8,6 @@ import { ITrustedList } from '../../popup/pages/trusted-list-page/trusted-list.t
 import { getValidUrl } from '../utils/validate-url';
 import { browser } from '../../browser-service';
 
-const CDN_URL = process.env.REACT_APP_CDN_URL!;
-
 class ScamReportService {
 	constructor(private authHttpService: EnhancedWithAuthHttpService, private httpService: HttpService) {}
 
@@ -34,15 +32,6 @@ class ScamReportService {
 
 		let isDangerous = false;
 		let isSafe = false;
-
-		// check if url is in danger agree list
-		const dangerAgreeList = await storageService.getDangerAgreeListFromStorage();
-		if (dangerAgreeList && dangerAgreeList?.length > 0) {
-			const item = dangerAgreeList.find(
-				(item: string) => getValidUrl(item).toLowerCase() === getValidUrl(data.url).toLowerCase()
-			);
-			if (item) return { status: EWebStatus.UNKNOWN };
-		}
 
 		// search in type only
 		if (data.type) {

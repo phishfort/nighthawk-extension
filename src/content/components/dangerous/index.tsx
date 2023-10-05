@@ -7,14 +7,21 @@ import PhishFortLogo from '../../../popup/components/common/icons/phishfortLogo'
 import * as GlobalTypography from '../../../popup/components/common/global-typography';
 import { browser } from '../../../browser-service';
 import { TopLogoSvg } from '../../../common/icons/top-logo';
+import { storageService } from '../../../api/services';
 
 const DangerousContentPage: React.FC = () => {
 	const host = document.location.host;
 	const [dangerousAgree, setDangerousAgree] = useState(false);
+	storageService.getDangerAgreeListFromStorage().then((data: string[]) => {
+		if (data?.includes(host)) {
+			setDangerousAgree(true);
+		}
+	});
 
 	if (dangerousAgree) return null;
 
 	const handleDangerousAgree = () => {
+		storageService.setDangerAgreeListToStorage(host);
 		setDangerousAgree(true);
 	};
 
