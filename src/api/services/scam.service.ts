@@ -20,6 +20,15 @@ class ScamReportService {
 	}
 
 	async checkScam(data: { url: string; type?: ECheckDataType }): Promise<ICheckScamResponse | null | void> {
+		// check if url is in danger agree list
+		const dangerAgreeList = await storageService.getDangerAgreeListFromStorage();
+		if (dangerAgreeList && dangerAgreeList?.length > 0) {
+			const item = dangerAgreeList.find(
+				(item: string) => getValidUrl(item).toLowerCase() === getValidUrl(data.url).toLowerCase()
+			);
+			if (item) return { status: EWebStatus.UNKNOWN };
+		}
+
 		// check if url is in nighthawk list
 		let nighthawkList = await storageService.getNighthawkListFromStorage();
 		if (!nighthawkList) {

@@ -1,12 +1,14 @@
 import { wrapStore } from 'webext-redux';
 import { PORT_STORE_NAME } from '../common/constants/app-keys.const';
 import store from './store';
-import { storageService } from '../api/services';
+import { scamReportService, storageService } from '../api/services';
 import { setAuthData, signOut } from '../popup/features/store/auth';
-import { setActiveTab } from '../content/features/store/source/sourceSlice';
+import { setActiveTab, getActiveTab } from '../content/features/store/source/sourceSlice';
 import { browser, isMozilla } from '../browser-service';
 import { setGuestGuardianPoints } from '../popup/features/store/user';
 import { REFETCH_TIME } from '../api/utils/validate-url';
+import { EWebStatus } from '../api/types';
+import { pattern } from '../popup/utils';
 
 browser.runtime.onConnect.addListener(function () {
 	console.log('connect!!!');
@@ -42,6 +44,70 @@ browser.runtime.onInstalled.addListener(function (detail) {
 // redirect to feedback form on uninstalled
 browser.runtime.setUninstallURL(process.env.REACT_APP_FEEDBACK_FORM_URL!);
 
+browser.webNavigation.onBeforeNavigate.addListener(async ({ url, tabId, frameId }) => {
+	if (frameId !== 0) return;
+	if (pattern.test(url)) {
+		browser.action.setIcon({
+			path: `/assets/logo/ic-nighthawk-dangerous.png`,
+			tabId
+		});
+		return;
+	}
+
+	const isListLoaded = await storageService.getNighthawkListFromStorage();
+	const dangerAgreeList = await storageService.getDangerAgreeListFromStorage();
+	if (dangerAgreeList?.length > 0 && dangerAgreeList?.includes(url)) {
+		return;
+	}
+	if (!isListLoaded) {
+		await loadLists();
+		return;
+	}
+
+	const status = await scamReportService.checkScam({ url });
+	if (!status?.status) return;
+	if (status.status === EWebStatus.DANGEROUS) {
+		browser.tabs.update(tabId, {
+			url: `warning.html?url=${url}`
+		});
+		return;
+	}
+	if (status.status === EWebStatus.SAFE) {
+		browser.action.setIcon({
+			path: `/assets/logo/ic-nighthawk-trusted.png`,
+			tabId
+		});
+		return;
+	}
+});
+
+browser.webNavigation.onCompleted.addListener(async ({ url, tabId, frameId }) => {
+	if (frameId !== 0) return;
+	if (pattern.test(url)) {
+		browser.action.setIcon({
+			path: `/assets/logo/ic-nighthawk-dangerous.png`,
+			tabId
+		});
+		return;
+	}
+
+	const isListLoaded = await storageService.getNighthawkListFromStorage();
+	if (!isListLoaded) {
+		await loadLists();
+		return;
+	}
+
+	const status = await scamReportService.checkScam({ url });
+	if (!status?.status) return;
+	if (status.status === EWebStatus.SAFE) {
+		browser.action.setIcon({
+			path: `/assets/logo/ic-nighthawk-trusted.png`,
+			tabId
+		});
+		return;
+	}
+});
+
 function handleActiveTab() {
 	browser.tabs.query({ currentWindow: true, active: true }, function (tabs) {
 		const tab = tabs[0] || {};
@@ -53,7 +119,20 @@ function handleActiveTab() {
 }
 
 browser.tabs.onActivated.addListener(handleActiveTab);
-browser.tabs.onUpdated.addListener(handleActiveTab);
+browser.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
+	handleActiveTab();
+	if (tab.active || changeInfo.url || changeInfo.status === 'complete') {
+		const url = tab.url as string;
+
+		if (pattern.test(url)) {
+			browser.action.setIcon({
+				path: `/assets/logo/ic-nighthawk-dangerous.png`,
+				tabId
+			});
+			return;
+		}
+	}
+});
 
 browser.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
 	if (msg.newIconPath) {
@@ -84,6 +163,11 @@ browser.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
 				console.log('FAILED TO REFETCH LISTS ON EXTENSION REQUEST');
 			});
 		return true;
+	}
+
+	if (msg.action === 'setDangerUrl') {
+		const { url } = msg;
+		storageService.setDangerAgreeListToStorage(url);
 	}
 
 	sendResponse({});

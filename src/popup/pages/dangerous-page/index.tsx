@@ -8,14 +8,19 @@ import { browser } from '../../../browser-service';
 import AuthWrapper from '../../components/auth-wrapper/auth-wrapper.component';
 import { useAppSelector } from '../../../event/store';
 import { selectIsVerified } from '../../features/store/auth';
+import { getActiveTab } from '../../../content/features/store/source/sourceSlice';
+import { pattern } from '../../utils';
 
 const DangerousPage: React.FC = () => {
+	const activeTab = useAppSelector(getActiveTab);
+	const url = new URL(activeTab || '');
 	const isVerified = useAppSelector(selectIsVerified);
-	const [url, setUrl] = React.useState<string>('');
+	const [dangerUrl, setDangerUrl] = React.useState<string>('');
+	const host = dangerUrl ? new URL(dangerUrl).host : '';
 
 	const HandleShutDown = () => {
 		browser.tabs.create({
-			url: url ? `${EXTERNAL_ROUTES.SAFE_BROWSING}&url=${url}` : EXTERNAL_ROUTES.SAFE_BROWSING
+			url: dangerUrl ? `${EXTERNAL_ROUTES.SAFE_BROWSING}&url=${dangerUrl}` : EXTERNAL_ROUTES.SAFE_BROWSING
 		});
 	};
 
@@ -23,19 +28,31 @@ const DangerousPage: React.FC = () => {
 		browser.tabs.goBack();
 	};
 
+	function getDangerURL() {
+		if (url.searchParams.has('url')) {
+			return url.searchParams.get('url');
+		}
+	}
+
 	React.useEffect(() => {
-		browser.tabs.query({ active: true, currentWindow: true }).then((tabs) => {
-			const tab = tabs[0];
-			if (tab && tab.id) {
-				setUrl(tab.url || '');
-			}
-		});
-	}, []);
+		if (pattern.test(activeTab)) {
+			setDangerUrl(getDangerURL() as string);
+		}
+	}, [activeTab]);
 	return (
 		<AuthWrapper Container={DangerousContainer} title={!isVerified ? 'SIGN IN' : ''} to={ROUTES.SIGN_IN} showBurger>
 			<Grid container direction="column" alignItems="center" justifyContent="center" mt="2rem">
-				<GlobalTypography.Text variant="subtitle1" colorVariant="common.white" fontWeight="fontWeightMedium">
-					THIS SITE IS
+				<GlobalTypography.Text
+					style={{
+						whiteSpace: 'pre-wrap',
+						wordBreak: 'break-word',
+						textAlign: 'center'
+					}}
+					variant="subtitle1"
+					colorVariant="common.white"
+					fontWeight="fontWeightMedium"
+				>
+					{dangerUrl ? host : 'THIS SITE'} IS
 				</GlobalTypography.Text>
 				<GlobalTypography.Text variant="h3" colorVariant="common.white" fontWeight="fontWeightMedium">
 					DANGEROUS

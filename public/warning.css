@@ -1,0 +1,135 @@
+.styled-image {
+	top: 0;
+	left: 0;
+	position: fixed;
+	object-fit: cover;
+	min-width: 100vw;
+	min-height: 100vh;
+	z-index: 9999;
+}
+
+.dangerous-container {
+	background-attachment: fixed;
+	background-size: cover;
+	top: 0;
+	left: 0;
+	position: fixed;
+	min-width: 100vw;
+	min-height: 100vh;
+	z-index: 9999;
+	display: flex;
+	flex-direction: column;
+}
+
+.grid {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	flex-flow: column wrap;
+	box-sizing: border-box;
+	display: flex;
+	flex-flow: column wrap;
+	width: 100%;
+	margin: 0px;
+	-webkit-box-pack: center;
+	justify-content: center;
+	-webkit-box-align: center;
+	align-items: center;
+	-webkit-box-flex: 1;
+	flex-grow: 1;
+}
+
+.box {
+	width: auto;
+	min-width: 430px;
+	min-height: 60px;
+	border: 2px solid #ffffff;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.top-log {
+	margin-top: 20px;
+	width: 170px;
+	height: 28px;
+	margin: 20px;
+}
+
+.typography {
+	font-family: 'IBM Plex Sans', Arial;
+	font-size: 20px;
+	font-weight: 500;
+	font-stretch: normal;
+	font-style: normal;
+	line-height: 1.4;
+	letter-spacing: normal;
+	text-align: center;
+	color: #ffffff;
+	margin: 0;
+}
+
+.one {
+	font-weight: bold;
+	font-size: 3rem;
+}
+
+.two {
+	font-weight: bold;
+	font-size: 1.5rem;
+}
+
+.three {
+	margin: 2rem 0px 1rem;
+	font-size: 1.25rem;
+	font-weight: 500;
+	font-family: Roboto, 'IBM Plex Sans', Arial;
+	line-height: 1.334;
+	color: rgb(255, 255, 255);
+	opacity: 1;
+}
+
+.sm {
+	margin: 1rem 0px;
+	font-size: 1.125rem;
+	font-family: Roboto, 'IBM Plex Sans', Arial;
+	line-height: 1.75;
+	text-align: center;
+	color: rgb(255, 255, 255);
+	max-width: 36rem;
+	font-weight: 500;
+	opacity: 1;
+}
+
+.link {
+	margin: 1rem 0px 0px;
+	font-size: 1rem;
+	font-family: Roboto, 'IBM Plex Sans', Arial;
+	line-height: 1.6;
+	text-align: center;
+	color: rgb(255, 255, 255);
+	font-weight: 500;
+	opacity: 1;
+	text-decoration: #ffffff;
+	cursor: pointer;
+	text-decoration-line: underline;
+}
+
+a {
+	color: #ffffff;
+	text-decoration: #ffffff;
+	cursor: pointer;
+	text-decoration-line: underline;
+}
+
+.logo-footer {
+	box-sizing: border-box;
+	display: flex;
+	flex-flow: wrap;
+	width: 100%;
+	margin: 0px 0px 2rem;
+	-webkit-box-pack: center;
+	justify-content: center;
+}
