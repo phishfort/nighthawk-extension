@@ -7,8 +7,8 @@ import { setActiveTab, getActiveTab } from '../content/features/store/source/sou
 import { browser, isMozilla } from '../browser-service';
 import { setGuestGuardianPoints } from '../popup/features/store/user';
 import { REFETCH_TIME } from '../api/utils/validate-url';
-import { EWebStatus } from '../api/types';
-import { pattern } from '../popup/utils';
+import { EType, EWebStatus } from '../api/types';
+import { getUrlType, pattern } from '../popup/utils';
 
 browser.runtime.onConnect.addListener(function () {
 	console.log('connect!!!');
@@ -46,6 +46,7 @@ browser.runtime.setUninstallURL(process.env.REACT_APP_FEEDBACK_FORM_URL!);
 
 browser.webNavigation.onBeforeNavigate.addListener(async ({ url, tabId, frameId }) => {
 	if (frameId !== 0) return;
+	if (getUrlType(url) !== EType.WEBSITE) return;
 	if (pattern.test(url)) {
 		browser.action.setIcon({
 			path: `/assets/logo/ic-nighthawk-dangerous.png`,
@@ -72,7 +73,8 @@ browser.webNavigation.onBeforeNavigate.addListener(async ({ url, tabId, frameId 
 		});
 		return;
 	}
-	if (status.status === EWebStatus.SAFE) {
+	//TODO: test more
+	if (!isMozilla && status.status === EWebStatus.SAFE) {
 		browser.action.setIcon({
 			path: `/assets/logo/ic-nighthawk-trusted.png`,
 			tabId
@@ -83,6 +85,7 @@ browser.webNavigation.onBeforeNavigate.addListener(async ({ url, tabId, frameId 
 
 browser.webNavigation.onCompleted.addListener(async ({ url, tabId, frameId }) => {
 	if (frameId !== 0) return;
+	if (getUrlType(url) !== EType.WEBSITE) return;
 	if (pattern.test(url)) {
 		browser.action.setIcon({
 			path: `/assets/logo/ic-nighthawk-dangerous.png`,

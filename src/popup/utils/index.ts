@@ -165,3 +165,11 @@ export const getValidUrl = (url: string, noWWW?: boolean) => {
 		console.log(e);
 	}
 };
+
+export const getUrlType = (url: string) => {
+	if (url.includes(EType.FACEBOOK)) return EType.FACEBOOK;
+	if (url.includes(EType.TWITTER)) return EType.TWITTER;
+	if (url.includes(EType.LINKEDIN)) return EType.LINKEDIN;
+	if (url.includes(EType.YOUTUBE)) return EType.YOUTUBE;
+	return EType.WEBSITE;
+};
