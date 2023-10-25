@@ -6,6 +6,7 @@ import * as Styled from './form-input.styled';
 import { AutocompleteInput } from './autocomplete-input';
 import { INighthawkList } from '../../../pages/trusted-list-page/trusted-list.types';
 import { getCustomErrorMsg } from './utils';
+import { getValidUrl } from '../../../../api/utils/validate-url';
 
 export interface IProps {
 	name: string;
@@ -20,6 +21,7 @@ export interface IProps {
 	onSetCustomErrors?: Dispatch<React.SetStateAction<boolean>>;
 	notTouchable?: boolean;
 	page?: string;
+	whiteList?: INighthawkList[];
 }
 
 const FormInput: FC<IProps> = ({
@@ -34,11 +36,14 @@ const FormInput: FC<IProps> = ({
 	blackList,
 	onSetCustomErrors,
 	notTouchable,
-	page
+	page,
+	whiteList
 }) => {
 	const { values, handleChange, errors, touched, setFieldValue } = useFormikContext();
 	const value = getIn(values, name) || passedValue;
-	const isBlackListError = blackList ? blackList.some((el) => value.includes(el.url)) : false;
+
+	const isBlackListError = blackList && blackList.some((el) => getValidUrl(el.url) === getValidUrl(value));
+	const isWhiteListError = whiteList && whiteList.some((el) => getValidUrl(el.url) === getValidUrl(value));
 	const isSpamReportError = greyList && page === 'scam-report' ? greyList.some((el) => value.includes(el)) : false;
 	const isTrustListError = greyList && page === 'trust-list' ? greyList.some((el) => value.includes(el)) : false;
 
@@ -46,17 +51,18 @@ const FormInput: FC<IProps> = ({
 		(getIn(errors, name) && (getIn(touched, name) || notTouchable)) ||
 		isBlackListError ||
 		isTrustListError ||
-		isSpamReportError;
+		isSpamReportError ||
+		isWhiteListError;
 
 	useEffect(() => {
 		if (onSetCustomErrors) {
-			if (isBlackListError || isTrustListError || isSpamReportError) {
+			if (isBlackListError || isTrustListError || isSpamReportError || isWhiteListError) {
 				onSetCustomErrors(true);
 			} else {
 				onSetCustomErrors(false);
 			}
 		}
-	}, [isBlackListError, isTrustListError, isSpamReportError]);
+	}, [isBlackListError, isTrustListError, isSpamReportError, isWhiteListError]);
 
 	return (
 		<Grid>
@@ -82,7 +88,8 @@ const FormInput: FC<IProps> = ({
 							getCustomErrorMsg({
 								isBlackListError,
 								isTrustListError,
-								isSpamReportError
+								isSpamReportError,
+								isWhiteListError
 							})}
 					</Styled.ErrorInfoText>
 				</Styled.ErrorInfoContainer>

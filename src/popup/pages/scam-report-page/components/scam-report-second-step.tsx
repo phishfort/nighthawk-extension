@@ -14,6 +14,7 @@ interface IProps {
 	blackList?: INighthawkList[];
 	onSetCustomErrors: Dispatch<React.SetStateAction<boolean>>;
 	currentType: EType;
+	whiteList?: INighthawkList[];
 }
 
 const ScamReportForm: React.FC<IProps> = ({
@@ -22,7 +23,8 @@ const ScamReportForm: React.FC<IProps> = ({
 	passedOptions,
 	greyList,
 	blackList,
-	onSetCustomErrors
+	onSetCustomErrors,
+	whiteList
 }) => {
 	return (
 		<Grid container direction="column" alignItems="center" justifyContent="center">
@@ -35,6 +37,7 @@ const ScamReportForm: React.FC<IProps> = ({
 					greyList={greyList}
 					blackList={blackList}
 					onSetCustomErrors={onSetCustomErrors}
+					whiteList={whiteList}
 					page="scam-report"
 				/>
 			</Grid>

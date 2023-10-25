@@ -1,7 +1,7 @@
 import { STORAGE_KEYS } from '../../common/constants/app-keys.const';
 import { browser } from '../../browser-service';
 import { INighthawkResponse, ITrustedList } from '../../popup/pages/trusted-list-page/trusted-list.types';
-import { CACHE_TIME } from '../utils/validate-url';
+
 export class StorageService {
 	public setTokenToStorage(token: string) {
 		browser.storage.local.set({ [STORAGE_KEYS.TOKEN]: token });

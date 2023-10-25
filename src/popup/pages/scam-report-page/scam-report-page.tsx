@@ -84,8 +84,10 @@ const ScamReportPage: React.FC = () => {
 	};
 
 	useEffect(() => {
-		const typeSelected = options.find((_) => _.value === savedFormValues?.type);
-		setSelectedValue(typeSelected);
+		if (savedFormValues?.type) {
+			const typeSelected = options.find((_) => _.value === savedFormValues?.type);
+			setSelectedValue(typeSelected);
+		}
 
 		storeWithMiddleware.then(({ dispatch }) => dispatch(fetchUserInfo()));
 		storeWithMiddleware.then(({ dispatch }) => dispatch(fetchNighthawkGreyList()));
@@ -99,10 +101,6 @@ const ScamReportPage: React.FC = () => {
 		storeWithMiddleware.then(({ dispatch }) => dispatch(fetchNighthawkWhiteList(type)));
 		storeWithMiddleware.then(({ dispatch }) => dispatch(fetchNighthawkBlackList(type)));
 	}, [type]);
-
-	useEffect(() => {
-		setSavedFormValues(JSON.parse(fromStore));
-	}, [fromStore]);
 
 	const initialValues = {
 		type: EType.WEBSITE,
@@ -170,6 +168,7 @@ const ScamReportPage: React.FC = () => {
 								blackList={blackList}
 								greyList={greyListOptions}
 								onSetCustomErrors={setCustomErrors}
+								whiteList={whiteList}
 							/>
 						) : null}
 					</form>
