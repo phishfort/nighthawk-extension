@@ -72,8 +72,8 @@ const AddTrustedPage: React.FC<AddTrustedPageProps> = () => {
 						})
 					)
 				)
-				.then(() => {
-					storageService.removeTrustedListFromStorage();
+				.then(async () => {
+					await storageService.removeTrustedListFromStorage();
 					navigate(ROUTES.ADDED_TO_TRUSTED);
 				});
 			resetForm();

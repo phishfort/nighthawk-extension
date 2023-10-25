@@ -177,7 +177,7 @@ browser.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
 	return true;
 });
 
-browser.runtime.onConnect.addListener((port) => {
+browser.runtime.onConnect.addListener(async (port) => {
 	if (port.name === process.env.REACT_APP_WEB_LOGIN) {
 		port.onMessage.addListener((msg) => {
 			console.log('\n message =>', msg);
@@ -205,9 +205,8 @@ browser.runtime.onConnect.addListener((port) => {
 	}
 
 	if (port.name === process.env.REACT_APP_WEB_LOGOUT) {
-		console.log('REMOVE TOKEN');
 		store.dispatch(signOut());
-		storageService.removeTokensFromStorage();
+		await storageService.removeTokensFromStorage();
 	}
 
 	if (port.name === process.env.REACT_APP_WEB_GUARDIAN_POINTS) {
@@ -222,9 +221,9 @@ browser.runtime.onConnect.addListener((port) => {
 		});
 	}
 	if (port.name === process.env.REACT_APP_TRUSTED_LIST_WEB) {
-		port.onMessage.addListener((msg) => {
+		port.onMessage.addListener(async (msg) => {
 			if (msg.shouldUpdateCache) {
-				storageService.removeTrustedListFromStorage();
+				await storageService.removeTrustedListFromStorage();
 				loadLists()
 					.then(() => {
 						console.log('SUCCESS LOADED LISTS ON WEB REQUEST');
@@ -276,56 +275,57 @@ if (!isMozilla) {
 	});
 }
 
-// Refetch lists
-setInterval(() => {
-	console.log('time to refetch');
-
-	storageService.removeTrustedListFromStorage();
-	storageService.removeNighthawkLists();
+// Refetch lists on interval
+setInterval(async () => {
+	console.log('REFETCH NIGHTHAWK LISTS');
+	await storageService.removeNighthawkLists();
 
 	loadLists()
 		.then(() => {
-			console.log('Refetch lists');
+			console.log('REFETCH NIGHTHAWK LISTS SUCCESSFULLY');
 		})
-		.catch((err) => console.log('error-> ', err));
+		.catch(() => console.log('Error REFETCH NIGHTHAWK LISTS'));
 }, REFETCH_TIME);
 
 async function loadLists() {
-	let nighthawkList = await storageService.getNighthawkListFromStorage();
-	let trustedList = await storageService.getTrustedListFromStorage();
 	const token = await storageService.getTokenFromStorage();
+	Promise.all([storageService.getNighthawkListFromStorage(), storageService.getTrustedListFromStorage()]).then(
+		async (res) => {
+			let nighthawkList = res[0];
+			let trustedList = res[1];
 
-	if (!nighthawkList) {
-		const resp = await fetch(process.env.REACT_APP_CDN_URL!, {
-			headers: {
-				'x-api-key': process.env.REACT_APP_NIGHTHAWK_API_KEY!
+			if (!nighthawkList) {
+				const resp = await fetch(process.env.REACT_APP_CDN_URL!, {
+					headers: {
+						'x-api-key': process.env.REACT_APP_NIGHTHAWK_API_KEY!
+					}
+				})
+					.then((res) => res.json())
+					.catch(() => {
+						console.log("CAN'T LOAD NIGHTHAWK LIST");
+					});
+				nighthawkList = resp;
+				storageService.setNighthawkListToStorage(resp);
 			}
-		})
-			.then((res) => res.json())
-			.catch((err) => {
-				console.log(err);
-			});
-		nighthawkList = resp;
-		storageService.setNighthawkListToStorage(resp);
-	}
-	//TODO: split this
 
-	if (!trustedList && token) {
-		const resp = await fetch(`${process.env.REACT_APP_BACKEND_URL}/user/my-trusted`, {
-			headers: {
-				Authorization: `Bearer ${token}`
+			if (!trustedList && token) {
+				const resp = await fetch(`${process.env.REACT_APP_BACKEND_URL}/user/my-trusted`, {
+					headers: {
+						Authorization: `Bearer ${token}`
+					}
+				})
+					.then((res) => res.json())
+					.catch(() => {
+						console.log("CAN'T LOAD TRUSTED LIST");
+					});
+				trustedList = resp;
+				storageService.setTrustedListToStorage(resp);
 			}
-		})
-			.then((res) => res.json())
-			.catch((err) => {
-				console.log(err);
-			});
-		trustedList = resp;
-		storageService.setTrustedListToStorage(resp);
-	}
 
-	return {
-		nighthawkList,
-		trustedList
-	};
+			return {
+				nighthawkList,
+				trustedList
+			};
+		}
+	);
 }

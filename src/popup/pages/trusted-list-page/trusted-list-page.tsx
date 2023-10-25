@@ -31,8 +31,8 @@ const TrustedListPage: React.FC<ITrustedListPageProps> = () => {
 	const handleRemoveItem = (id: string) => {
 		storeWithMiddleware
 			.then(({ dispatch }) => dispatch(removeFromTrustedList({ id })))
-			.then(() => {
-				storageService.removeTrustedListFromStorage();
+			.then(async () => {
+				await storageService.removeTrustedListFromStorage();
 			});
 
 		storeWithMiddleware.then(({ dispatch }) => dispatch(fetchTrustedList()));

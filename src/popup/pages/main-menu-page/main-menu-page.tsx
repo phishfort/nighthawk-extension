@@ -27,7 +27,7 @@ const MainMenu: React.FC = () => {
 		await handleAuth();
 		dispatch(clearTrustedList());
 		dispatch(clearUserInfo());
-		storageService.removePointsFromStorage();
+		await storageService.removePointsFromStorage();
 		handleRedirect(EXTERNAL_ROUTES.SING_IN as string);
 	};
 

@@ -21,8 +21,8 @@ export class StorageService {
 		return token[STORAGE_KEYS.GUEST_TOKEN];
 	}
 
-	public removeTokensFromStorage() {
-		browser.storage.local.remove([STORAGE_KEYS.TOKEN, STORAGE_KEYS.GUEST_TOKEN]);
+	public async removeTokensFromStorage() {
+		await browser.storage.local.remove([STORAGE_KEYS.TOKEN, STORAGE_KEYS.GUEST_TOKEN]);
 	}
 
 	public setPointsToStorage(points: string) {
@@ -34,26 +34,21 @@ export class StorageService {
 		return data[STORAGE_KEYS.GUARDIAN_POINTS];
 	}
 
-	public removePointsFromStorage() {
-		browser.storage.local.remove(STORAGE_KEYS.GUARDIAN_POINTS);
+	public async removePointsFromStorage() {
+		await browser.storage.local.remove(STORAGE_KEYS.GUARDIAN_POINTS);
 	}
 
 	public async getNighthawkListFromStorage() {
 		const data = await browser.storage.local.get(STORAGE_KEYS.NIGHTHAWK_LIST);
-		const nighthawkCacheTime = await browser.storage.local.get(STORAGE_KEYS.NH_CACHE_TIME);
-		const cacheTime = nighthawkCacheTime[STORAGE_KEYS.NH_CACHE_TIME];
-		if (cacheTime && Date.now() - cacheTime > CACHE_TIME) {
-			return null;
-		}
 
 		return data[STORAGE_KEYS.NIGHTHAWK_LIST];
 	}
 
 	public setNighthawkListToStorage(list: INighthawkResponse) {
-		browser.storage.local.set({ [STORAGE_KEYS.NIGHTHAWK_LIST]: list, [STORAGE_KEYS.NH_CACHE_TIME]: Date.now() });
+		browser.storage.local.set({ [STORAGE_KEYS.NIGHTHAWK_LIST]: list });
 	}
-	public removeNighthawkLists() {
-		browser.storage.local.remove(STORAGE_KEYS.NIGHTHAWK_LIST);
+	public async removeNighthawkLists() {
+		await browser.storage.local.remove(STORAGE_KEYS.NIGHTHAWK_LIST);
 	}
 	public async getDangerAgreeListFromStorage() {
 		const data = await browser.storage.local.get(STORAGE_KEYS.DANGER_AGREE_LIST);
@@ -76,8 +71,8 @@ export class StorageService {
 		browser.storage.local.set({ [STORAGE_KEYS.TRUSTED_LIST]: list });
 	}
 
-	public removeTrustedListFromStorage() {
-		browser.storage.local.remove(STORAGE_KEYS.TRUSTED_LIST);
+	public async removeTrustedListFromStorage() {
+		await browser.storage.local.remove(STORAGE_KEYS.TRUSTED_LIST);
 	}
 }
 
