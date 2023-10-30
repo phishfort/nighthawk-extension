@@ -7,6 +7,7 @@ import { HttpService } from './http.service';
 import { ITrustedList } from '../../popup/pages/trusted-list-page/trusted-list.types';
 import { getValidUrl } from '../utils/validate-url';
 import { browser } from '../../browser-service';
+import { SOC_MEDIA_TYPES } from '../../common/constants/app-keys.const';
 
 class ScamReportService {
 	constructor(private authHttpService: EnhancedWithAuthHttpService, private httpService: HttpService) {}
@@ -20,6 +21,11 @@ class ScamReportService {
 	}
 
 	async checkScam(data: { url: string; type?: ECheckDataType }): Promise<ICheckScamResponse | null | void> {
+		if (Object.values(SOC_MEDIA_TYPES).some((el) => getValidUrl(el) === getValidUrl(data.url))) {
+			return {
+				status: EWebStatus.SAFE
+			};
+		}
 		// check if url is in danger agree list
 		const dangerAgreeList = await storageService.getDangerAgreeListFromStorage();
 		if (dangerAgreeList && dangerAgreeList?.length > 0) {

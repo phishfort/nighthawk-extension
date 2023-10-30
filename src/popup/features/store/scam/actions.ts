@@ -3,8 +3,7 @@ import { REDUCERS_NAMES } from '../../../../event/store/types';
 import { SCAM_ACTIONS_TYPES } from './types';
 import { scamReportService } from '../../../../api/services';
 import { IReportScam } from '../../../../api/types/scam.types';
-import { ECheckDataType, EWebStatus, ICheckScamResponse } from '../../../../api/types';
-import { SOC_MEDIA_TYPES } from '../../../../common/constants/app-keys.const';
+import { ECheckDataType, ICheckScamResponse } from '../../../../api/types';
 
 export interface ICheckScamRequest {
 	type: ECheckDataType;
@@ -50,13 +49,6 @@ export const checkScam = createAsyncThunk<ICheckScamResponse, ICheckScamRequest,
 	`${REDUCERS_NAMES.SCAM}/${SCAM_ACTIONS_TYPES.CHECK_SCAM}`,
 	async ({ url, type }, { rejectWithValue }) => {
 		try {
-			// CHECK SOCIAL NETWORK STATUS
-			if (Object.values(SOC_MEDIA_TYPES).some((el) => url.includes(el))) {
-				return {
-					[url]: EWebStatus.UNKNOWN
-				};
-			}
-
 			const data = await scamReportService.checkScam({ url, type });
 			return {
 				type,

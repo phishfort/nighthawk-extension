@@ -119,7 +119,7 @@ const ScamReportPage: React.FC = () => {
 							type,
 							url,
 							impersonatedUrl,
-							userId: userInfo.id,
+							userId: userInfo?.id,
 							comment,
 							label: selectedValue?.label
 						})

@@ -53,7 +53,7 @@ function ContentComponent() {
 
 	return (
 		<>
-			{sourceData && sourceData[cutHost] === EWebStatus.DANGEROUS && <DangerousContentPage />}
+			{/* {sourceData && sourceData[cutHost] === EWebStatus.DANGEROUS && <DangerousContentPage />} */}
 			{host === HOST_KEYS.YOUTUBE && <YoutubeContentPage />}
 			{host === HOST_KEYS.NIGHTHAWK_WEB_VERSION && <TokenManagerComponent />}
 			{href.includes(new URL(`${process.env.REACT_APP_WEB_URL}`).host) && <MessageManagerComponent />}

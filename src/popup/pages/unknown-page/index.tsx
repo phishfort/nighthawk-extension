@@ -9,11 +9,14 @@ import { selectIsAuth, selectIsVerified, userGuestAuth } from '../../features/st
 import { useNavigate } from 'react-router-dom';
 import storeWithMiddleware from '../../../common/mockStore';
 import AuthWrapper from '../../components/auth-wrapper/auth-wrapper.component';
+import { getActiveTab } from '../../../content/features/store/source/sourceSlice';
+import { getValidUrl } from '../../utils';
 
 const UnknownPage: React.FC = () => {
 	const isVerified = useAppSelector(selectIsVerified);
 	const isAuth = useAppSelector(selectIsAuth);
 	const navigate = useNavigate();
+	const activeTab = useAppSelector(getActiveTab);
 
 	const handleAddScum = () => {
 		if (!isAuth) {
@@ -24,12 +27,22 @@ const UnknownPage: React.FC = () => {
 		}
 		navigate(ROUTES.SCAM_REPORT);
 	};
+	const url = activeTab ? getValidUrl(activeTab)?.split('/')[0] : '';
 
 	return (
 		<AuthWrapper Container={UnknownContainer} title={!isVerified ? 'SIGN IN' : ''} to={ROUTES.SIGN_IN} showBurger>
 			<Grid container direction="column" alignItems="center" justifyContent="center" mt="2rem">
-				<GlobalTypography.Text variant="subtitle1" colorVariant="common.white" fontWeight="fontWeightMedium">
-					THIS SITE IS
+				<GlobalTypography.Text
+					style={{
+						whiteSpace: 'pre-wrap',
+						wordBreak: 'break-word',
+						textAlign: 'center'
+					}}
+					variant="subtitle1"
+					colorVariant="common.white"
+					fontWeight="fontWeightMedium"
+				>
+					{url}
 				</GlobalTypography.Text>
 				<GlobalTypography.Text variant="h3" colorVariant="common.white" fontWeight="fontWeightMedium">
 					UNKNOWN

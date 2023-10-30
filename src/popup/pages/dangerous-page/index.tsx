@@ -9,7 +9,7 @@ import AuthWrapper from '../../components/auth-wrapper/auth-wrapper.component';
 import { useAppSelector } from '../../../event/store';
 import { selectIsVerified } from '../../features/store/auth';
 import { getActiveTab } from '../../../content/features/store/source/sourceSlice';
-import { pattern } from '../../utils';
+import { pattern, getValidUrl } from '../../utils';
 
 const DangerousPage: React.FC = () => {
 	const activeTab = useAppSelector(getActiveTab);
@@ -39,6 +39,7 @@ const DangerousPage: React.FC = () => {
 			setDangerUrl(getDangerURL() as string);
 		}
 	}, [activeTab]);
+	const validUrl = dangerUrl ? getValidUrl(dangerUrl) : '';
 	return (
 		<AuthWrapper Container={DangerousContainer} title={!isVerified ? 'SIGN IN' : ''} to={ROUTES.SIGN_IN} showBurger>
 			<Grid container direction="column" alignItems="center" justifyContent="center" mt="2rem">
@@ -52,7 +53,7 @@ const DangerousPage: React.FC = () => {
 					colorVariant="common.white"
 					fontWeight="fontWeightMedium"
 				>
-					{dangerUrl ? host : 'THIS SITE'} IS
+					{validUrl}
 				</GlobalTypography.Text>
 				<GlobalTypography.Text variant="h3" colorVariant="common.white" fontWeight="fontWeightMedium">
 					DANGEROUS
