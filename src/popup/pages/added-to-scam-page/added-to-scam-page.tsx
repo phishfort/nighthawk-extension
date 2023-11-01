@@ -10,35 +10,36 @@ import { GuardPoints } from '../../components/common/guard-points';
 import { useEffect } from 'react';
 import { storageService } from '../../../api/services';
 import { selectIsVerified, signOut } from '../../features/store/auth';
-import { getValidUrl, handleRedirect } from '../../utils';
-import { selectGuestGuardianPoints, setGuestGuardianPoints } from '../../features/store/user';
-import AuthWrapper from '../../components/auth-wrapper/auth-wrapper.component';
+import { getUrlType, getValidUrl, handleRedirect, options } from '../../utils';
+import { fetchUserInfo, selectUserInfo } from '../../features/store/user';
+import storeWithMiddleware from '../../../common/mockStore';
+import { IUserInfo } from '../../../api/types/profile.types';
+import PopupContainer from '../../components/popup-container/popup-container.component';
 
 const AddedToScamPage: React.FC = () => {
 	const dispatch = useAppDispatch();
 	const scamData = useAppSelector(selectScamData);
-	const guestGuardianPoints = useAppSelector(selectGuestGuardianPoints);
 	const isVerified = useAppSelector(selectIsVerified);
+	const userInfo: IUserInfo = useAppSelector(selectUserInfo) || {};
 
 	const handleAuth = async () => {
 		await storageService.removeTokensFromStorage();
 		dispatch(signOut());
 		handleRedirect(EXTERNAL_ROUTES.SIGN_UP as string);
 	};
-
+	const getUserInfo = async () => {
+		const { dispatch } = await storeWithMiddleware;
+		//@ts-ignore
+		dispatch(fetchUserInfo());
+	};
 	useEffect(() => {
-		// update this only to read fro backend
-		storageService.getPointsFromStorage().then((points) => {
-			const nextPoints = Number(points) || 0;
-			storageService.setPointsToStorage(String(nextPoints));
-			dispatch(setGuestGuardianPoints(nextPoints));
-		});
+		getUserInfo();
 	}, []);
 
 	const url = scamData?.url ? getValidUrl(scamData?.url) : '';
-
+	const reportedType = url ? options.find((el) => el.value == getUrlType(url))?.label : options[0].label;
 	return (
-		<AuthWrapper title={!isVerified ? 'SIGN IN' : ''} to={ROUTES.SIGN_IN} showBurger>
+		<PopupContainer>
 			<Grid container direction="column" justifyContent="center" alignItems="center">
 				<GlobalTypography.Text
 					variant="subtitle1"
@@ -47,10 +48,10 @@ const AddedToScamPage: React.FC = () => {
 					fontWeight="fontWeightBold"
 					mb="1rem"
 				>
-					{`${scamData?.label} Reported`}
+					{`${reportedType} Reported`}
 				</GlobalTypography.Text>
 
-				<GuardPoints points={String(guestGuardianPoints || 0)} />
+				<GuardPoints points={String(userInfo?.guardianPoints || 0)} />
 
 				<GlobalTypography.Text
 					variant="subtitle2"
@@ -75,15 +76,21 @@ const AddedToScamPage: React.FC = () => {
 					m="1.5rem 0.75rem"
 				>
 					Thank you for helping keep the community safe! &nbsp;
-					<Link to={ROUTES.CREATE_ACCOUNT} onClick={handleAuth}>
-						<b>Create an account</b>
-					</Link>
-					&nbsp; to track your Guardian points.
+					{!isVerified && (
+						<>
+							<Link to={ROUTES.CREATE_ACCOUNT} onClick={handleAuth}>
+								<b>Create an account</b>
+							</Link>
+							&nbsp; to track your Guardian points
+						</>
+					)}
 				</GlobalTypography.Text>
 
-				<HexagonBtn title="Create Account" width="225px" onClick={handleAuth} link={ROUTES.CREATE_ACCOUNT} />
+				{!isVerified && (
+					<HexagonBtn title="Create Account" width="225px" onClick={handleAuth} link={ROUTES.CREATE_ACCOUNT} />
+				)}
 			</Grid>
-		</AuthWrapper>
+		</PopupContainer>
 	);
 };
 

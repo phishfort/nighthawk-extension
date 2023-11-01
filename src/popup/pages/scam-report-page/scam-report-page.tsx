@@ -126,8 +126,8 @@ const ScamReportPage: React.FC = () => {
 					)
 				)
 				.then(() => {
-					localStorage.removeItem('scamFormValues' + activeTab);
-					isVerified ? navigate(ROUTES.YOUR_ACCOUNT) : navigate(ROUTES.ADDED_TO_SCAM);
+					localStorage.removeItem('scamFormValues-' + activeTab);
+					navigate(ROUTES.ADDED_TO_SCAM);
 				});
 			resetForm();
 		},
@@ -160,7 +160,7 @@ const ScamReportPage: React.FC = () => {
 								options={options}
 							/>
 						</FormFieldContainer>
-						{currentStep === 2 && selectedValue?.value ? (
+						{selectedValue?.value ? (
 							<ScamReportForm
 								currentType={type}
 								isValidButton={isValidButton}
@@ -169,6 +169,7 @@ const ScamReportPage: React.FC = () => {
 								greyList={greyListOptions}
 								onSetCustomErrors={setCustomErrors}
 								whiteList={whiteList}
+								isLoading={isScamLoading}
 							/>
 						) : null}
 					</form>

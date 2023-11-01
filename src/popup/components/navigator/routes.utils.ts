@@ -19,6 +19,7 @@ import AddedToScamPage from '../../pages/added-to-scam-page/added-to-scam-page';
 import AboutGuardianPointsPage from '../../pages/about-guardian-points-page/about-guardian-points-page';
 import QRCodePage from '../../pages/support-nighthawk-page/qr-code.component';
 import AboutTrustlistPage from '../../pages/about-trust-list-page/about-trustlist-page';
+import AboutSocialsPage from '../../pages/about-socials-page/about-socials-page';
 
 export enum ROUTES {
 	SIGN_IN = '/sign-in',
@@ -47,7 +48,8 @@ export enum ROUTES {
 	TERMS_AND_CONDITIONS = '/terms-and-conditions',
 	PRIVACY_POLICY = '/privacy-policy',
 	NIGHTHAWK_TRUSTED_LIST = '/nighthawk-trusted-list',
-	ABOUT_TRUSTED_LIST = '/about-trusted-list'
+	ABOUT_TRUSTED_LIST = '/about-trusted-list',
+	ABOUT_SOCIALS_PAGE = '/about-socials_page'
 }
 
 const unitedRoutes: GenericRouteType[] = [
@@ -62,7 +64,8 @@ const unitedRoutes: GenericRouteType[] = [
 	{ component: AboutTrustlistPage, path: ROUTES.ABOUT_TRUSTED_LIST },
 	{ component: AddedToScamPage, path: ROUTES.ADDED_TO_SCAM },
 	{ component: QRCodePage, path: ROUTES.QR_CODE },
-	{ component: ErrorPage, path: ROUTES.ERROR_PAGE }
+	{ component: ErrorPage, path: ROUTES.ERROR_PAGE },
+	{ component: AboutSocialsPage, path: ROUTES.ABOUT_SOCIALS_PAGE }
 ];
 
 export const EXTERNAL_ROUTES = {

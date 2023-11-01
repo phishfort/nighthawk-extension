@@ -10,13 +10,17 @@ import { useAppSelector } from '../../../event/store';
 import { selectIsVerified } from '../../features/store/auth';
 import AuthWrapper from '../../components/auth-wrapper/auth-wrapper.component';
 import { getActiveTab } from '../../../content/features/store/source/sourceSlice';
-import { getValidUrl } from '../../utils';
+import { getUrlType, getValidUrl } from '../../utils';
+import { EType } from '../../../api/types';
+import * as Styled from '../../components/common/guard-points/guard-points.styled';
+import { useNavigate } from 'react-router-dom';
 
 const ValidPage: React.FC = () => {
 	const isVerified = useAppSelector(selectIsVerified);
 	const activeTab = useAppSelector(getActiveTab);
 	const url = activeTab ? getValidUrl(activeTab)?.split('/')[0] : '';
-
+	const isSocial = url ? getUrlType(url) !== EType.WEBSITE : false;
+	const navigate = useNavigate();
 	return (
 		<AuthWrapper Container={ValidContainer} title={!isVerified ? 'SIGN IN' : ''} to={ROUTES.SIGN_IN} showBurger>
 			<Grid container direction="column" alignItems="center" justifyContent="center" mt="2rem">
@@ -34,6 +38,15 @@ const ValidPage: React.FC = () => {
 				</GlobalTypography.Text>
 				<GlobalTypography.Text variant="h3" colorVariant="common.white" fontWeight="fontWeightMedium">
 					VALID
+					{isSocial && (
+						<Styled.QuestionMarkIcon
+							style={{
+								fontSize: '1.3rem',
+								paddingBottom: '5px'
+							}}
+							onClick={() => navigate(ROUTES.ABOUT_SOCIALS_PAGE)}
+						/>
+					)}
 				</GlobalTypography.Text>
 				<Grid item mt="3rem">
 					<HexagonBtn title="Report Scam" width="225px" link={ROUTES.SCAM_REPORT} />

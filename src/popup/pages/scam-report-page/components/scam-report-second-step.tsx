@@ -15,6 +15,7 @@ interface IProps {
 	onSetCustomErrors: Dispatch<React.SetStateAction<boolean>>;
 	currentType: EType;
 	whiteList?: INighthawkList[];
+	isLoading?: boolean;
 }
 
 const ScamReportForm: React.FC<IProps> = ({
@@ -24,7 +25,8 @@ const ScamReportForm: React.FC<IProps> = ({
 	greyList,
 	blackList,
 	onSetCustomErrors,
-	whiteList
+	whiteList,
+	isLoading
 }) => {
 	return (
 		<Grid container direction="column" alignItems="center" justifyContent="center">
@@ -60,7 +62,11 @@ const ScamReportForm: React.FC<IProps> = ({
 				/>
 			</Grid>
 			<Grid mt="0.5rem">
-				<HexagonBtn title="Send Report" width="250px" isDisabled={!isValidButton} />
+				<HexagonBtn
+					title={isLoading ? 'Loading...' : 'Send Report'}
+					width="250px"
+					isDisabled={!isValidButton || isLoading}
+				/>
 			</Grid>
 		</Grid>
 	);
