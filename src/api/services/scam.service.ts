@@ -39,8 +39,8 @@ class ScamReportService {
 		let nighthawkList = await storageService.getNighthawkListFromStorage();
 		if (!nighthawkList) {
 			browser.runtime.sendMessage({ action: 'loadLists' }, (response) => {
-				if (response.nighthawkList) {
-					nighthawkList = response.nighthawkList;
+				if (response?.nighthawkList) {
+					nighthawkList = response?.nighthawkList;
 				}
 			});
 		}
@@ -51,7 +51,7 @@ class ScamReportService {
 		// search in type only
 		if (data.type) {
 			let key = '';
-			Object.keys(nighthawkList.blacklist).forEach((item: any) => {
+			Object.keys(nighthawkList?.blacklist).forEach((item: any) => {
 				if (data.type === ECheckDataType.GOOGLE) {
 					key = EType.WEBSITE;
 				} else if (data.type?.toLowerCase().includes(item.toLowerCase())) {
@@ -60,7 +60,7 @@ class ScamReportService {
 			});
 
 			if (key) {
-				nighthawkList.blacklist[key].forEach((url: any) => {
+				nighthawkList?.blacklist[key].forEach((url: any) => {
 					const nighthawkUrl = getValidUrl(url);
 					const item = nighthawkUrl && nighthawkUrl.toLowerCase() === getValidUrl(data.url).toLowerCase();
 					if (item) {
@@ -69,7 +69,7 @@ class ScamReportService {
 					}
 				});
 
-				nighthawkList.trustlist[key].forEach((url: any) => {
+				nighthawkList?.trustlist[key].forEach((url: any) => {
 					const nighthawkUrl = getValidUrl(url);
 					const item = nighthawkUrl && nighthawkUrl.toLowerCase() === getValidUrl(data.url).toLowerCase();
 					if (item) {
@@ -79,7 +79,7 @@ class ScamReportService {
 				});
 			}
 		} else {
-			Object.entries(nighthawkList.blacklist).forEach(([key, value]: any) => {
+			Object.entries(nighthawkList?.blacklist).forEach(([key, value]: any) => {
 				value.forEach((url: any) => {
 					const nighthawkUrl = getValidUrl(url);
 					const item = nighthawkUrl && nighthawkUrl.toLowerCase() === getValidUrl(data.url).toLowerCase();
@@ -90,7 +90,7 @@ class ScamReportService {
 				});
 			});
 
-			Object.entries(nighthawkList.trustlist).forEach(([key, value]: any) => {
+			Object.entries(nighthawkList?.trustlist).forEach(([key, value]: any) => {
 				value.forEach((url: any) => {
 					const nighthawkUrl = getValidUrl(url);
 					const item = nighthawkUrl && nighthawkUrl.toLowerCase() === getValidUrl(data.url).toLowerCase();
@@ -107,13 +107,13 @@ class ScamReportService {
 			let trustedList = await storageService.getTrustedListFromStorage();
 			if (!trustedList) {
 				browser.runtime.sendMessage({ action: 'loadLists' }, (response) => {
-					if (response.trustedList) {
-						trustedList = response.trustedList;
+					if (response?.trustedList) {
+						trustedList = response?.trustedList;
 					}
 				});
 			}
 
-			trustedList.forEach((tl: ITrustedList) => {
+			trustedList?.forEach((tl: ITrustedList) => {
 				const trustedListUrl = getValidUrl(tl.url);
 				const item = trustedListUrl && trustedListUrl.toLowerCase() === getValidUrl(data.url).toLowerCase();
 				if (item) {

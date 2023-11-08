@@ -1,7 +1,7 @@
 //@ts-nocheck
 import { useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '../event/store';
-import DangerousContentPage from './components/dangerous';
+// import DangerousContentPage from './components/dangerous';
 import { getActiveTab, getSourceData, setSourceType } from './features/store/source/sourceSlice';
 import { defineIconName } from './utils/icon.util';
 import YoutubeContentPage from './components/youtube';
@@ -53,7 +53,6 @@ function ContentComponent() {
 
 	return (
 		<>
-			{/* {sourceData && sourceData[cutHost] === EWebStatus.DANGEROUS && <DangerousContentPage />} */}
 			{host === HOST_KEYS.YOUTUBE && <YoutubeContentPage />}
 			{host === HOST_KEYS.NIGHTHAWK_WEB_VERSION && <TokenManagerComponent />}
 			{href.includes(new URL(`${process.env.REACT_APP_WEB_URL}`).host) && <MessageManagerComponent />}

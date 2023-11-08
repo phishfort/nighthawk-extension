@@ -24,8 +24,11 @@ export function getValidUrl(url: string): string {
 
 		// facebook
 		if (validUrl.includes('facebook.com')) {
-			if (searchParams.get('id')) {
-				return searchParams.get('id') as string;
+			if (searchParams.has('id')) {
+				const id = searchParams.get('id');
+				if (id) {
+					return id;
+				}
 			}
 
 			// look for id in group/, page/, people/ ...
@@ -36,7 +39,7 @@ export function getValidUrl(url: string): string {
 			}
 
 			// look for username in group/, page/, people/ ...
-			const keyWords = ['groups', 'pages', 'people', 'events', 'marketplace'];
+			const keyWords = ['groups', 'pages', 'people', 'events', 'marketplace', 'media', 'set'];
 			const arr = pathname.split('/').filter((el) => el && !keyWords.includes(el));
 			if (arr.length) {
 				return arr[0];
