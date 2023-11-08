@@ -4,7 +4,8 @@ const url = new URL(window.location.href);
 // detect if the current page is the warning page
 if (window.location.href.includes('warning.html')) {
 	const showBox = document.getElementById('show-box');
-	showBox.innerText = getDangerURL();
+	const dangerURL = new URL(getDangerURL());
+	showBox.innerText = dangerURL.host;
 }
 
 // handle danger agree list

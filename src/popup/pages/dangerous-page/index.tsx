@@ -16,7 +16,7 @@ const DangerousPage: React.FC = () => {
 	const url = new URL(activeTab || '');
 	const isVerified = useAppSelector(selectIsVerified);
 	const [dangerUrl, setDangerUrl] = React.useState<string>('');
-	const host = dangerUrl ? new URL(dangerUrl).host : '';
+	const host = dangerUrl ? 'www.' + new URL(dangerUrl).host : '';
 
 	const HandleShutDown = () => {
 		browser.tabs.create({
@@ -39,7 +39,7 @@ const DangerousPage: React.FC = () => {
 			setDangerUrl(getDangerURL() as string);
 		}
 	}, [activeTab]);
-	const validUrl = dangerUrl ? getValidUrl(dangerUrl) : '';
+
 	return (
 		<AuthWrapper Container={DangerousContainer} title={!isVerified ? 'SIGN IN' : ''} to={ROUTES.SIGN_IN} showBurger>
 			<Grid container direction="column" alignItems="center" justifyContent="center" mt="2rem">
@@ -53,7 +53,7 @@ const DangerousPage: React.FC = () => {
 					colorVariant="common.white"
 					fontWeight="fontWeightMedium"
 				>
-					{validUrl}
+					{host}
 				</GlobalTypography.Text>
 				<GlobalTypography.Text variant="h3" colorVariant="common.white" fontWeight="fontWeightMedium">
 					DANGEROUS
