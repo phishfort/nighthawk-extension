@@ -5,7 +5,7 @@ import { getActiveTab, getSourceData } from './features/store/source/sourceSlice
 import { defineIconName } from './utils/icon.util';
 import YoutubeContentPage from './components/youtube';
 import TokenManagerComponent from './token-manager.component';
-import { HOST_KEYS, checkList } from '../common/constants/app-keys.const';
+import { HOST_KEYS } from '../common/constants/app-keys.const';
 import TwitterContentPage from './components/twitter';
 import GoogleContentPage from './components/google';
 import FacebookContentPage from './components/facebook';
@@ -21,9 +21,7 @@ import MessageManagerComponent from './message-manager.component';
 function ContentComponent() {
 	const { host, href, pathname, search } = document.location;
 	let cutHost = removeWWW(host);
-	if (checkList.includes(cutHost) && (pathname.length > 1 || search)) {
-		cutHost = href;
-	}
+
 	const dispatch = useAppDispatch();
 	const sourceData = useAppSelector(getSourceData);
 	const activeTab = useAppSelector(getActiveTab);

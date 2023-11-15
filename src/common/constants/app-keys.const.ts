@@ -32,7 +32,8 @@ export const SOC_MEDIA_TYPES = {
 	[EType.YOUTUBE]: 'youtube.com',
 	[EType.TWITTER]: 'twitter.com',
 	[EType.FACEBOOK]: 'facebook.com',
-	[EType.LINKEDIN]: 'linkedin.com'
+	[EType.LINKEDIN]: 'linkedin.com',
+	[EType.GOOGLE]: 'google.com'
 };
 
 export const checkList = ['google.com', 'github.com'];

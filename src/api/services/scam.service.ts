@@ -26,7 +26,6 @@ class ScamReportService {
 				status: EWebStatus.SAFE
 			};
 		}
-		// check if url is in danger agree list
 
 		// check if url is in nighthawk list
 		let nighthawkList = await storageService.getNighthawkListFromStorage();

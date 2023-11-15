@@ -197,7 +197,8 @@ export enum EType {
 	TWITTER = 'twitter',
 	FACEBOOK = 'facebook',
 	YOUTUBE = 'youtube',
-	LINKEDIN = 'linkedin'
+	LINKEDIN = 'linkedin',
+	GOOGLE = 'google'
 }
 
 export enum EWebStatus {
