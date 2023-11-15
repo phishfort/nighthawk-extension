@@ -1,8 +1,7 @@
 //@ts-nocheck
 import { useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '../event/store';
-// import DangerousContentPage from './components/dangerous';
-import { getActiveTab, getSourceData, setSourceType } from './features/store/source/sourceSlice';
+import { getActiveTab, getSourceData } from './features/store/source/sourceSlice';
 import { defineIconName } from './utils/icon.util';
 import YoutubeContentPage from './components/youtube';
 import TokenManagerComponent from './token-manager.component';
@@ -43,13 +42,17 @@ function ContentComponent() {
 	}, [host, activeOrigin, isAuth]);
 
 	useEffect(() => {
-		if (sourceData && sourceData[cutHost]) {
-			browser?.runtime?.sendMessage(
-				{ newIconPath: `/assets/logo/${defineIconName(sourceData[cutHost])}` },
-				(response) => response
-			);
+		if (!sourceData || !cutHost) {
+			return;
 		}
-	}, [sourceData?.[cutHost]]);
+
+		const hostStatus = sourceData[cutHost];
+		if (hostStatus && !hostStatus.includes(EWebStatus.UNKNOWN)) {
+			browser?.runtime?.sendMessage({
+				newIconPath: `/assets/logo/${defineIconName(hostStatus)}`
+			});
+		}
+	}, [sourceData, cutHost]);
 
 	return (
 		<>

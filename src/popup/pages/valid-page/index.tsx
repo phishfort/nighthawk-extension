@@ -10,17 +10,19 @@ import { useAppSelector } from '../../../event/store';
 import { selectIsVerified } from '../../features/store/auth';
 import AuthWrapper from '../../components/auth-wrapper/auth-wrapper.component';
 import { getActiveTab } from '../../../content/features/store/source/sourceSlice';
-import { getUrlType, getValidUrl } from '../../utils';
+import { getUrlType } from '../../utils';
 import { EType } from '../../../api/types';
 import * as Styled from '../../components/common/guard-points/guard-points.styled';
 import { useNavigate } from 'react-router-dom';
+import { removeWWW } from '../../../content/utils/index.util';
 
 const ValidPage: React.FC = () => {
 	const isVerified = useAppSelector(selectIsVerified);
 	const activeTab = useAppSelector(getActiveTab);
-	const url = activeTab ? getValidUrl(activeTab)?.split('/')[0] : '';
+	const url = activeTab ? 'www.' + removeWWW(new URL(activeTab).host) : '';
 	const isSocial = url ? getUrlType(url) !== EType.WEBSITE : false;
 	const navigate = useNavigate();
+
 	return (
 		<AuthWrapper Container={ValidContainer} title={!isVerified ? 'SIGN IN' : ''} to={ROUTES.SIGN_IN} showBurger>
 			<Grid container direction="column" alignItems="center" justifyContent="center" mt="2rem">

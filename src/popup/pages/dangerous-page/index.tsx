@@ -9,36 +9,39 @@ import AuthWrapper from '../../components/auth-wrapper/auth-wrapper.component';
 import { useAppSelector } from '../../../event/store';
 import { selectIsVerified } from '../../features/store/auth';
 import { getActiveTab } from '../../../content/features/store/source/sourceSlice';
-import { pattern, getValidUrl } from '../../utils';
+import { pattern } from '../../utils';
+import { removeWWW } from '../../../content/utils/index.util';
 
 const DangerousPage: React.FC = () => {
 	const activeTab = useAppSelector(getActiveTab);
-	const url = new URL(activeTab || '');
 	const isVerified = useAppSelector(selectIsVerified);
 	const [dangerUrl, setDangerUrl] = React.useState<string>('');
-	const host = dangerUrl ? 'www.' + new URL(dangerUrl).host : '';
 
 	const HandleShutDown = () => {
 		browser.tabs.create({
 			url: dangerUrl ? `${EXTERNAL_ROUTES.SAFE_BROWSING}&url=${dangerUrl}` : EXTERNAL_ROUTES.SAFE_BROWSING
 		});
 	};
-
 	const HandleToSafety = () => {
 		browser.tabs.goBack();
 	};
-
-	function getDangerURL() {
-		if (url.searchParams.has('url')) {
-			return url.searchParams.get('url');
+	const getDangerURL = () => {
+		try {
+			const parsedUrl = new URL(activeTab);
+			return pattern.test(activeTab) && parsedUrl.searchParams.has('url')
+				? parsedUrl.searchParams.get('url')
+				: activeTab;
+		} catch (error) {
+			console.error('Error parsing URL:', error);
+			return activeTab;
 		}
-	}
+	};
 
 	React.useEffect(() => {
-		if (pattern.test(activeTab)) {
-			setDangerUrl(getDangerURL() as string);
-		}
+		setDangerUrl(getDangerURL() as string);
 	}, [activeTab]);
+
+	const host = dangerUrl ? 'www.' + removeWWW(new URL(dangerUrl).host) : '';
 
 	return (
 		<AuthWrapper Container={DangerousContainer} title={!isVerified ? 'SIGN IN' : ''} to={ROUTES.SIGN_IN} showBurger>

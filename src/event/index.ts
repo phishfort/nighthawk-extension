@@ -6,7 +6,7 @@ import { setAuthData, signOut } from '../popup/features/store/auth';
 import { setActiveTab, getActiveTab } from '../content/features/store/source/sourceSlice';
 import { browser, isMozilla } from '../browser-service';
 import { setGuestGuardianPoints } from '../popup/features/store/user';
-import { REFETCH_TIME } from '../api/utils/validate-url';
+import { REFETCH_TIME, getValidUrl } from '../api/utils/validate-url';
 import { EType, EWebStatus } from '../api/types';
 import { getUrlType, pattern } from '../popup/utils';
 
@@ -63,9 +63,7 @@ browser.webNavigation.onBeforeNavigate.addListener(async ({ url, tabId, frameId 
 
 	const isListLoaded = await storageService.getNighthawkListFromStorage();
 	const dangerAgreeList = await storageService.getDangerAgreeListFromStorage();
-	if (dangerAgreeList?.length > 0 && dangerAgreeList?.includes(url)) {
-		return;
-	}
+	const isDangerAgree = dangerAgreeList?.some((dangerUrl: string) => dangerUrl.includes(getValidUrl(url))) || false;
 	if (!isListLoaded) {
 		await loadLists();
 		return;
@@ -74,9 +72,15 @@ browser.webNavigation.onBeforeNavigate.addListener(async ({ url, tabId, frameId 
 	const status = await scamReportService.checkScam({ url });
 	if (!status?.status) return;
 	if (status.status === EWebStatus.DANGEROUS) {
-		browser.tabs.update(tabId, {
-			url: `warning.html?url=${url}`
+		browser.action.setIcon({
+			path: `/assets/logo/ic-nighthawk-dangerous.png`,
+			tabId
 		});
+		if (!isDangerAgree) {
+			browser.tabs.update(tabId, {
+				url: `warning.html?url=${url}`
+			});
+		}
 		return;
 	}
 	if (!isMozilla && status.status === EWebStatus.SAFE) {
@@ -113,6 +117,14 @@ browser.webNavigation.onCompleted.addListener(async ({ url, tabId, frameId }) =>
 
 	const status = await scamReportService.checkScam({ url });
 	if (!status?.status) return;
+
+	if (status.status === EWebStatus.DANGEROUS) {
+		browser.action.setIcon({
+			path: `/assets/logo/ic-nighthawk-dangerous.png`,
+			tabId
+		});
+		return;
+	}
 	if (status.status === EWebStatus.SAFE) {
 		browser.action.setIcon({
 			path: `/assets/logo/ic-nighthawk-trusted.png`,

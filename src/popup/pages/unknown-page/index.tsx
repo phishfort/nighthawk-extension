@@ -10,14 +10,13 @@ import { useNavigate } from 'react-router-dom';
 import storeWithMiddleware from '../../../common/mockStore';
 import AuthWrapper from '../../components/auth-wrapper/auth-wrapper.component';
 import { getActiveTab } from '../../../content/features/store/source/sourceSlice';
-import { getValidUrl } from '../../utils';
+import { removeWWW } from '../../../content/utils/index.util';
 
 const UnknownPage: React.FC = () => {
 	const isVerified = useAppSelector(selectIsVerified);
 	const isAuth = useAppSelector(selectIsAuth);
 	const navigate = useNavigate();
 	const activeTab = useAppSelector(getActiveTab);
-
 	const handleAddScum = () => {
 		if (!isAuth) {
 			storeWithMiddleware
@@ -27,7 +26,7 @@ const UnknownPage: React.FC = () => {
 		}
 		navigate(ROUTES.SCAM_REPORT);
 	};
-	const url = activeTab ? getValidUrl(activeTab)?.split('/')[0] : '';
+	const url = activeTab ? 'www.' + removeWWW(new URL(activeTab).host) : '';
 
 	return (
 		<AuthWrapper Container={UnknownContainer} title={!isVerified ? 'SIGN IN' : ''} to={ROUTES.SIGN_IN} showBurger>
