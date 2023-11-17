@@ -4,6 +4,7 @@ import { EType, EWebStatus } from '../../api/types';
 import { ROUTES } from '../components/navigator/routes.utils';
 import { FormSelectProps } from '../components/common/form-field-container/types';
 import { HOST_KEYS, SOC_MEDIA_TYPES } from '../../common/constants/app-keys.const';
+import { removeWWW } from '../../content/utils/index.util';
 
 export const handleRedirect = (url: string) => {
 	browser.tabs.query({ currentWindow: true, active: true }, function (tabs) {
@@ -172,4 +173,17 @@ export const getUrlType = (url: string) => {
 	if (url.includes(EType.LINKEDIN)) return EType.LINKEDIN;
 	if (url.includes(EType.YOUTUBE)) return EType.YOUTUBE;
 	return EType.WEBSITE;
+};
+
+export const checkUrl = (url: string): string => {
+	try {
+		const host = removeWWW(new URL(url).host);
+		if (host && host != 'newtab') {
+			return url ? 'www.' + host : '';
+		}
+
+		return '';
+	} catch (error) {
+		return '';
+	}
 };

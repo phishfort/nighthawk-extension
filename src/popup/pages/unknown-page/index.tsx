@@ -11,6 +11,7 @@ import storeWithMiddleware from '../../../common/mockStore';
 import AuthWrapper from '../../components/auth-wrapper/auth-wrapper.component';
 import { getActiveTab } from '../../../content/features/store/source/sourceSlice';
 import { removeWWW } from '../../../content/utils/index.util';
+import { checkUrl } from '../../utils';
 
 const UnknownPage: React.FC = () => {
 	const isVerified = useAppSelector(selectIsVerified);
@@ -26,8 +27,7 @@ const UnknownPage: React.FC = () => {
 		}
 		navigate(ROUTES.SCAM_REPORT);
 	};
-	const url = activeTab ? 'www.' + removeWWW(new URL(activeTab).host) : '';
-
+	const url = checkUrl(activeTab);
 	return (
 		<AuthWrapper Container={UnknownContainer} title={!isVerified ? 'SIGN IN' : ''} to={ROUTES.SIGN_IN} showBurger>
 			<Grid container direction="column" alignItems="center" justifyContent="center" mt="2rem">
