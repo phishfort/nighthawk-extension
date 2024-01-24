@@ -24,8 +24,7 @@ const TwitterSearchComponent: React.FC = () => {
 		const searchContentSpans = el.querySelectorAll('span');
 		if (searchContentSpans?.length) {
 			searchContentSpans.forEach((searchEl) => {
-				const span = searchEl as HTMLAnchorElement;
-				const result = span?.textContent;
+				const result = searchEl?.textContent;
 
 				if (result?.startsWith('@')) {
 					const acc = result.slice(1);
@@ -44,11 +43,25 @@ const TwitterSearchComponent: React.FC = () => {
 							pt: 1
 						});
 
-						const div = el.querySelectorAll('div.css-901oao')[1] as HTMLDivElement;
-						if (div) {
-							div.style.display = 'flex';
-							div.style.alignItems = 'center';
-							div.append(icon);
+						const closeDiv = searchEl.closest('div');
+						const parentDiv = searchEl?.parentElement;
+						if (closeDiv || parentDiv) {
+							if (closeDiv) {
+								closeDiv.style.display = 'flex';
+								closeDiv.style.alignItems = 'center';
+								closeDiv.append(icon);
+							} else if (parentDiv) {
+								parentDiv.style.display = 'flex';
+								parentDiv.style.alignItems = 'center';
+								parentDiv.append(icon);
+							}
+						} else {
+							const div = el.querySelectorAll('div.css-175oi2r')[1] as HTMLDivElement;
+							if (div) {
+								div.style.display = 'flex';
+								div.style.alignItems = 'center';
+								div.append(icon);
+							}
 						}
 					}
 				}
@@ -63,7 +76,10 @@ const TwitterSearchComponent: React.FC = () => {
 
 	if (searchResults.length) {
 		searchResults.forEach((el) => {
-			handleCheckAndRender(el);
+			const div = el?.querySelectorAll('[data-testid=TypeaheadUser]');
+			if (div[0]) {
+				handleCheckAndRender(el);
+			}
 		});
 	}
 	const handleUpdate = () => {

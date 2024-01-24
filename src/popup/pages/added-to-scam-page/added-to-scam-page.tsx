@@ -6,7 +6,6 @@ import { useAppDispatch, useAppSelector } from '../../../event/store';
 import { EXTERNAL_ROUTES, ROUTES } from '../../components/navigator/routes.utils';
 import { selectScamData } from '../../features/store/scam';
 import HexagonBtn from '../../components/common/hexagon-button';
-import { GuardPoints } from '../../components/common/guard-points';
 import { useEffect } from 'react';
 import { storageService } from '../../../api/services';
 import { selectIsVerified, signOut } from '../../features/store/auth';
@@ -50,8 +49,6 @@ const AddedToScamPage: React.FC = () => {
 				>
 					{`${reportedType} Reported`}
 				</GlobalTypography.Text>
-
-				<GuardPoints points={String(userInfo?.guardianPoints || 0)} />
 
 				<GlobalTypography.Text
 					variant="subtitle2"

@@ -127,9 +127,9 @@ const ScamReportPage: React.FC = () => {
 				)
 				.then(() => {
 					localStorage.removeItem('scamFormValues-' + activeTab);
+					resetForm();
 					navigate(ROUTES.ADDED_TO_SCAM);
 				});
-			resetForm();
 		},
 		validationSchema: validationSchema(true)
 	});

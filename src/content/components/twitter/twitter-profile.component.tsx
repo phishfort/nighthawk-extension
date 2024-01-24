@@ -31,9 +31,11 @@ const TwitterProfileContentPage: React.FC = () => {
 		const userContainer = document.querySelector('[data-testid=UserName]');
 
 		if (!injected && (userContainer || emptyState)) {
-			const userNameEl = userContainer
-				? userContainer.querySelectorAll('div.css-901oao')[1]
-				: document.querySelector('[data-testid=primaryColumn]')?.querySelectorAll('div[dir=ltr]')[2];
+			const usernameContainer = userContainer?.querySelectorAll('[dir=ltr]')[1];
+			const span = usernameContainer?.querySelectorAll('span')[0];
+			const closerDiv = span?.closest('div');
+			const parentDiv = span?.parentElement;
+			const userNameEl = closerDiv || parentDiv;
 
 			if (!injected && userNameEl) {
 				setUserName(userNameEl);

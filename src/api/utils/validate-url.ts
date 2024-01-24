@@ -39,7 +39,7 @@ export function getValidUrl(url: string): string {
 			}
 
 			// look for username in group/, page/, people/ ...
-			const keyWords = ['groups', 'pages', 'people', 'events', 'marketplace', 'media', 'set'];
+			const keyWords = ['groups', 'pages', 'people', 'events', 'marketplace', 'media', 'set', 'p'];
 			const arr = pathname.split('/').filter((el) => el && !keyWords.includes(el));
 			if (arr.length) {
 				return arr[0];

@@ -39,7 +39,8 @@ const excludedPaths = [
 	'newsletters',
 	'settings',
 	'/i/',
-	'keyboard_shortcuts'
+	'keyboard_shortcuts',
+	'status'
 ];
 
 let path = '';
