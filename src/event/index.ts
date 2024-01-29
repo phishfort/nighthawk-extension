@@ -63,7 +63,8 @@ browser.webNavigation.onBeforeNavigate.addListener(async ({ url, tabId, frameId 
 
 	const isListLoaded = await storageService.getNighthawkListFromStorage();
 	const dangerAgreeList = await storageService.getDangerAgreeListFromStorage();
-	const isDangerAgree = dangerAgreeList?.some((dangerUrl: string) => dangerUrl.includes(getValidUrl(url))) || false;
+	const isDangerAgree =
+		dangerAgreeList?.some((dangerUrl: string) => getValidUrl(dangerUrl) === getValidUrl(url)) || false;
 	if (!isListLoaded) {
 		await loadLists();
 		return;
@@ -194,6 +195,12 @@ browser.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
 	if (msg.action === 'setDangerUrl') {
 		const { url } = msg;
 		storageService.setDangerAgreeListToStorage(url);
+	}
+
+	if (msg.action == 'redirectUrl') {
+		browser.tabs.update({
+			url: `warning.html?url=${msg.redirectUrl}`
+		});
 	}
 
 	sendResponse({});

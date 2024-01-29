@@ -17,6 +17,10 @@ import { getOriginFromHref, removeWWW } from './utils/index.util';
 import { browser } from '../browser-service';
 import { selectIsAuth } from '../popup/features/store/auth';
 import MessageManagerComponent from './message-manager.component';
+import Website from '../rule-engine/website';
+import RuleEngine from '../rule-engine/rule';
+import { storageService } from '../api/services';
+import { getValidUrl } from '../api/utils/validate-url';
 
 function ContentComponent() {
 	const { host, href, pathname, search } = document.location;
@@ -51,6 +55,24 @@ function ContentComponent() {
 			});
 		}
 	}, [sourceData, cutHost]);
+
+	useEffect(() => {
+		const website = new Website(document).toJSON();
+		storageService.getDangerAgreeListFromStorage().then((list: string[]) => {
+			if (list?.length > 0 && list?.some((dangerUrl) => getValidUrl(dangerUrl) === getValidUrl(website?.url))) return;
+			else if (!website.url.includes('chrome-extension://')) {
+				const ruleEngine = new RuleEngine();
+				ruleEngine.checkWebsite(website).then((result) => {
+					if (result.status === 'flagged') {
+						browser.runtime.sendMessage({
+							redirectUrl: website.url,
+							action: 'redirectUrl'
+						});
+					}
+				});
+			}
+		});
+	}, []);
 
 	return (
 		<>
