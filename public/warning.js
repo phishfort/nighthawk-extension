@@ -5,7 +5,7 @@ const url = new URL(window.location.href);
 if (window.location.href.includes('warning.html')) {
 	const showBox = document.getElementById('show-box');
 	const dangerURL = new URL(getDangerURL());
-	showBox.innerText = dangerURL.host;
+	showBox.innerText = dangerURL.href;
 }
 
 // handle danger agree list

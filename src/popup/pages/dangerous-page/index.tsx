@@ -41,7 +41,7 @@ const DangerousPage: React.FC = () => {
 		setDangerUrl(getDangerURL() as string);
 	}, [activeTab]);
 
-	const host = dangerUrl ? 'www.' + removeWWW(new URL(dangerUrl).host) : '';
+	const host = dangerUrl;
 
 	return (
 		<AuthWrapper Container={DangerousContainer} title={!isVerified ? 'SIGN IN' : ''} to={ROUTES.SIGN_IN} showBurger>
@@ -50,7 +50,11 @@ const DangerousPage: React.FC = () => {
 					style={{
 						whiteSpace: 'pre-wrap',
 						wordBreak: 'break-word',
-						textAlign: 'center'
+						textAlign: 'center',
+						overflowX: 'auto',
+						overflowY: 'hidden',
+						scrollbarWidth: 'thin',
+						maxWidth: 300
 					}}
 					variant="subtitle1"
 					colorVariant="common.white"

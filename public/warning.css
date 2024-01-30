@@ -42,13 +42,23 @@
 }
 
 .box {
-	width: auto;
-	min-width: 430px;
-	min-height: 60px;
+	max-width: 500px;
+	min-width: 300px;
+	min-height: 70px;
 	border: 2px solid #ffffff;
-	display: flex;
-	align-items: center;
-	justify-content: center;
+	overflow-x: auto;
+	overflow-y: hidden;
+	scrollbar-width: thin;
+	-webkit-scrollbar {
+		width: 10px;
+		height: 8px;
+	}
+}
+
+.box h4 {
+	padding: 0 10px;
+	text-align: center;
+	margin-top: 15px;
 }
 
 .top-log {
