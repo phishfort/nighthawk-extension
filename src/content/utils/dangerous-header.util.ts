@@ -14,6 +14,7 @@ export const createDangerousHeader = (text = 'THIS ACCOUNT HAS BEEN FLAGGED AS D
 	header.style.left = '-1px';
 
 	const image = document.createElement('img');
+	image.id = 'dangerous-border-image';
 	image.src = browser?.runtime?.getURL('static/media/bg-low-poly-red.bae263b671da993ff138.png');
 	image.style.objectFit = 'cover';
 	image.style.width = 'calc(100% + 2px)';
