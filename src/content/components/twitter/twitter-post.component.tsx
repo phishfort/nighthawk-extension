@@ -6,7 +6,8 @@ import { ECheckDataType, EWebStatus } from '../../../api/types';
 import { useAppSelector } from '../../../event/store';
 import { checkScam, selectCheckDataTwitter } from '../../../popup/features/store/scam';
 import storeWithMiddleware from '../../../common/mockStore';
-import { checkTwitterRedirect, getTweetAuthorAcc } from './twitter.util';
+import { getTweetAuthorAcc } from './twitter.util';
+import { browser } from '../../../browser-service';
 
 const TwitterPostContentPage: React.FC = () => {
 	const checkData = useAppSelector(selectCheckDataTwitter);
@@ -133,24 +134,30 @@ const TwitterPostContentPage: React.FC = () => {
 					if (!href) return null;
 					if (!existedHrefs.find((el) => el === href)) {
 						setExistedHrefs((prev) => [...prev, href]);
-						const isScam = await checkTwitterRedirect(href);
-						if (!isScam) return null;
-						const finishedBorder = postContent.querySelector('#dangerous-border');
+						const port = browser.runtime.connect({
+							name: process.env.REACT_APP_TWITTER_REDIRECT
+						});
+						port.postMessage({ url: href });
+						port.onMessage.addListener((response: any) => {
+							console.log('response', response);
+							if (response) {
+								const { isScam, reason } = response;
+								if (isScam) {
+									const finishedBorder = postContent.querySelector('#dangerous-border');
+									if (!finishedBorder) {
+										postContent.style.marginTop = '40px';
+										postContent.style.boxSizing = 'border-box';
+										postContent.style.border = '2px solid #C30303';
+										const header = createDangerousHeader(reason, { fontSize: '13px', fontWeight: 'bold' });
+										postContent.prepend(header);
+									}
+								}
+							}
 
-						const image = postContent.querySelector('img');
-						console.log(image);
-						if (image) {
-							image.style.display = 'none';
-						}
-						if (!finishedBorder) {
-							postContent.style.marginTop = '40px';
-							postContent.style.boxSizing = 'border-box';
-							postContent.style.border = '2px solid #C30303';
-
-							const header = createDangerousHeader('THE REDIRECT LINK IS D/T FROM THE ORIGINAL LINK');
-							postContent.prepend(header);
-						}
+							return null;
+						});
 					}
+					return null;
 				});
 			}
 		});

@@ -10,12 +10,15 @@ import { useAppSelector } from '../../../event/store';
 import { selectIsVerified } from '../../features/store/auth';
 import { getActiveTab } from '../../../content/features/store/source/sourceSlice';
 import { pattern } from '../../utils';
-import { removeWWW } from '../../../content/utils/index.util';
+import { removeWWW, shortenUrl } from '../../../content/utils/index.util';
+import CopyIcon from '../../components/common/icons/copy-icon';
+import ConnectButton from '../connect-with-us-page/components/button';
 
 const DangerousPage: React.FC = () => {
 	const activeTab = useAppSelector(getActiveTab);
 	const isVerified = useAppSelector(selectIsVerified);
 	const [dangerUrl, setDangerUrl] = React.useState<string>('');
+	const [copyText, setCopyText] = React.useState('Copy full URL');
 
 	const HandleShutDown = () => {
 		browser.tabs.create({
@@ -41,7 +44,15 @@ const DangerousPage: React.FC = () => {
 		setDangerUrl(getDangerURL() as string);
 	}, [activeTab]);
 
-	const host = dangerUrl;
+	const host = dangerUrl ? shortenUrl(dangerUrl) : '';
+	const handleCopy = () => {
+		navigator.clipboard.writeText(dangerUrl).then(() => {
+			setCopyText('Copied');
+			setTimeout(() => {
+				setCopyText('Copy full URL');
+			}, 2000);
+		});
+	};
 
 	return (
 		<AuthWrapper Container={DangerousContainer} title={!isVerified ? 'SIGN IN' : ''} to={ROUTES.SIGN_IN} showBurger>
@@ -49,12 +60,7 @@ const DangerousPage: React.FC = () => {
 				<GlobalTypography.Text
 					style={{
 						whiteSpace: 'pre-wrap',
-						wordBreak: 'break-word',
-						textAlign: 'center',
-						overflowX: 'auto',
-						overflowY: 'hidden',
-						scrollbarWidth: 'thin',
-						maxWidth: 300
+						wordBreak: 'break-word'
 					}}
 					variant="subtitle1"
 					colorVariant="common.white"
@@ -62,6 +68,16 @@ const DangerousPage: React.FC = () => {
 				>
 					{host}
 				</GlobalTypography.Text>
+				{host.length > 1 && (
+					<GlobalTypography.Text
+						textAlign={'center'}
+						variant="subtitle1"
+						fontWeight={'fontWeightMedium'}
+						colorVariant="common.white"
+					>
+						<ConnectButton icon={<CopyIcon />} title={copyText} onClick={handleCopy} />
+					</GlobalTypography.Text>
+				)}
 				<GlobalTypography.Text variant="h3" colorVariant="common.white" fontWeight="fontWeightMedium">
 					DANGEROUS
 				</GlobalTypography.Text>

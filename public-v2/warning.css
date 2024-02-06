@@ -37,26 +37,30 @@
 	justify-content: center;
 	-webkit-box-align: center;
 	align-items: center;
-	-webkit-box-flex: 1;
+	flex-grow: 1;
+}
+
+.grid::-webkit-box-flex {
 	flex-grow: 1;
 }
 
 .box {
 	max-width: 500px;
 	min-width: 300px;
-	min-height: 70px;
+	min-height: 60px;
 	border: 2px solid #ffffff;
-	overflow-x: auto;
-	overflow-y: hidden;
+	overflow: scroll;
 	scrollbar-width: thin;
-	-webkit-scrollbar {
-		width: 10px;
-		height: 8px;
-	}
+}
+
+.box::-webkit-scrollbar {
+	width: 10px;
+	height: 8px;
 }
 
 .box h4 {
 	padding: 0 10px;
+	width: max-content;
 	text-align: center;
 	margin-top: 15px;
 }

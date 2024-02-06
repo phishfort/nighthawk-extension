@@ -52,3 +52,17 @@ export const handleFinishedIcon = (
 export const getOriginFromHref = (href: string) => {
 	return (href?.match(/([(http(s)?):\/\/(www\.)?a-zA-Z0-9@:%._\-\+~#=]{2,256}\.[a-z]{2,6})/) || [])[0];
 };
+
+export const shortenUrl = (url: string, pathCount = 1, totalLength = 25) => {
+	try {
+		const { host, pathname } = new URL(url);
+		const path = pathname.split('/').filter(Boolean).slice(0, pathCount).join('/');
+		let shortUrl = `www.${host}/${path}`;
+		if (shortUrl.endsWith('/')) shortUrl = shortUrl.slice(0, -1);
+		if (shortUrl.length > totalLength) shortUrl = `${shortUrl.slice(0, totalLength - 3)}...`;
+
+		return shortUrl;
+	} catch (error) {
+		return url;
+	}
+};

@@ -1,7 +1,7 @@
 import logoImg from '../../assets/images/hawk-logo.png';
 import { browser } from '../../browser-service';
 
-export const createDangerousHeader = (text = 'THIS ACCOUNT HAS BEEN FLAGGED AS DANGEROUS') => {
+export const createDangerousHeader = (text = 'THIS ACCOUNT HAS BEEN FLAGGED AS DANGEROUS', customStyle: any = {}) => {
 	const header = document.createElement('div');
 	header.id = 'dangerous-border';
 	header.style.display = 'flex';
@@ -48,8 +48,9 @@ export const createDangerousHeader = (text = 'THIS ACCOUNT HAS BEEN FLAGGED AS D
 	warningText.style.top = '0px';
 	warningText.style.zIndex = '3';
 	warningText.style.color = 'white';
-	warningText.style.fontSize = '14px';
+	warningText.style.fontSize = customStyle?.fontSize || '14px';
 	warningText.style.fontFamily = 'Helvetica';
+	warningText.style.fontWeight = customStyle?.fontWeight || 'normal';
 
 	logoContainer.prepend(logo);
 	logoContainer.append('WARNING');
