@@ -266,38 +266,6 @@ browser.runtime.onConnect.addListener(async (port) => {
 			}
 		});
 	}
-
-	if (port.name === process.env.REACT_APP_TWITTER_REDIRECT) {
-		port.onMessage.addListener((msg) => {
-			console.log('Twitter redirect check : ', msg);
-			if (msg.url) {
-				fetch(msg.url, {
-					method: 'get',
-					headers: {
-						'User-Agent': 'Twitterbot/1.0'
-					}
-				})
-					.then((res) => res.json())
-					.then((res) => console.log('Res ---> ', res));
-
-				fetch(`${process.env.REACT_APP_BACKEND_URL}/user/checkTwitterRedirect`, {
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json'
-					},
-					body: JSON.stringify({ url: msg.url })
-				})
-					.then((res) => res.json())
-					.then((res) => {
-						console.log('Res -', res);
-						port.postMessage(res);
-					})
-					.catch(() => {
-						console.log("CAN'T LOAD TWITTER REDIRECT");
-					});
-			}
-		});
-	}
 });
 
 // Hack BG script reload with send message in bg to content script

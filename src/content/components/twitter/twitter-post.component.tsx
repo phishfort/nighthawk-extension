@@ -7,7 +7,6 @@ import { useAppSelector } from '../../../event/store';
 import { checkScam, selectCheckDataTwitter } from '../../../popup/features/store/scam';
 import storeWithMiddleware from '../../../common/mockStore';
 import { getTweetAuthorAcc } from './twitter.util';
-import { browser } from '../../../browser-service';
 
 const TwitterPostContentPage: React.FC = () => {
 	const checkData = useAppSelector(selectCheckDataTwitter);
@@ -23,7 +22,6 @@ const TwitterPostContentPage: React.FC = () => {
 
 	const postElement = document.querySelectorAll('[data-testid=cellInnerDiv]');
 	const postContent = document.querySelectorAll('[data-testid=tweetText]');
-	const posts = document.querySelectorAll('[data-testid=tweet]');
 
 	if (postContent.length) {
 		postContent.forEach((el) => {
@@ -119,46 +117,6 @@ const TwitterPostContentPage: React.FC = () => {
 						}
 					});
 				}
-			}
-		});
-	}
-
-	if (posts.length) {
-		posts.forEach((post) => {
-			const postContent = post as HTMLElement;
-			const links = post.querySelectorAll('a[href^="https://t.co"]');
-			if (links.length) {
-				links.forEach(async (link) => {
-					const anchor = link as HTMLAnchorElement;
-					const href = anchor.href;
-					if (!href) return null;
-					if (!existedHrefs.find((el) => el === href)) {
-						setExistedHrefs((prev) => [...prev, href]);
-						const port = browser.runtime.connect({
-							name: process.env.REACT_APP_TWITTER_REDIRECT
-						});
-						port.postMessage({ url: href });
-						port.onMessage.addListener((response: any) => {
-							console.log('response', response);
-							if (response) {
-								const { isScam, reason } = response;
-								if (isScam) {
-									const finishedBorder = postContent.querySelector('#dangerous-border');
-									if (!finishedBorder) {
-										postContent.style.marginTop = '40px';
-										postContent.style.boxSizing = 'border-box';
-										postContent.style.border = '2px solid #C30303';
-										const header = createDangerousHeader(reason, { fontSize: '13px', fontWeight: 'bold' });
-										postContent.prepend(header);
-									}
-								}
-							}
-
-							return null;
-						});
-					}
-					return null;
-				});
 			}
 		});
 	}
