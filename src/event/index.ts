@@ -9,7 +9,7 @@ import { setGuestGuardianPoints } from '../popup/features/store/user';
 import { REFETCH_TIME, getValidUrl } from '../api/utils/validate-url';
 import { EType, EWebStatus } from '../api/types';
 import { getUrlType, pattern } from '../popup/utils';
-import axios from 'axios';
+import { checkTwitterRedirectScam } from './twitter-redirect.feature';
 
 browser.runtime.onConnect.addListener(function () {
 	console.log('connect!!!');
@@ -263,6 +263,15 @@ browser.runtime.onConnect.addListener(async (port) => {
 		port.onMessage.addListener(async (msg) => {
 			if (msg.shouldLoadLists) {
 				loadLists();
+			}
+		});
+	}
+
+	if (port.name === process.env.REACT_APP_TWITTER_REDIRECT) {
+		port.onMessage.addListener(async (msg) => {
+			if (msg.url.includes('https://t.co')) {
+				const response = await checkTwitterRedirectScam(msg.url);
+				port.postMessage(response);
 			}
 		});
 	}
