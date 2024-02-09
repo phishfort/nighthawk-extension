@@ -1,5 +1,7 @@
 import { browser, isMozilla } from '../browser-service';
 
+const TWITTER_UA = 'Twitterbot/1.0';
+
 const getExpandedTCORedirectLink = async (tcoUrl: string) => {
 	try {
 		const resp = await fetch(tcoUrl, {
@@ -23,7 +25,7 @@ const getExpandedTCORedirectLink = async (tcoUrl: string) => {
 	}
 };
 
-const getV3Rules = () => {
+const getV3Rules = (userAgent: string) => {
 	const allResourceTypes = Object.values(chrome.declarativeNetRequest.ResourceType);
 	const rules: chrome.declarativeNetRequest.Rule[] = [
 		{
@@ -35,7 +37,7 @@ const getV3Rules = () => {
 					{
 						operation: chrome.declarativeNetRequest.HeaderOperation.SET,
 						header: 'User-Agent',
-						value: 'Twitterbot/1.0'
+						value: userAgent
 					}
 				]
 			},
@@ -48,36 +50,54 @@ const getV3Rules = () => {
 	return rules;
 };
 
+async function setUserAgentHeader(userAgent: string) {
+	if (!isMozilla) {
+		const rules = getV3Rules(userAgent);
+		await browser.declarativeNetRequest.updateDynamicRules({
+			removeRuleIds: rules.map((rule) => rule.id),
+			addRules: rules
+		});
+	} else {
+		browser.webRequest.onBeforeSendHeaders.addListener(
+			(details) => {
+				details?.requestHeaders?.push({ name: 'User-Agent', value: userAgent });
+				return { requestHeaders: details.requestHeaders };
+			},
+			{ urls: ['<all_urls>'] },
+			['blocking', 'requestHeaders']
+		);
+	}
+}
+
+async function removeUserAgentHeader(userAgent: string) {
+	if (!isMozilla) {
+		const rules = getV3Rules(userAgent);
+		await browser.declarativeNetRequest.updateDynamicRules({
+			removeRuleIds: rules.map((rule) => rule.id)
+		});
+	} else {
+		browser.webRequest.onBeforeSendHeaders.addListener(
+			(details) => {
+				details.requestHeaders = details?.requestHeaders?.filter((header) => header.name !== 'User-Agent');
+				return { requestHeaders: details.requestHeaders };
+			},
+			{ urls: ['<all_urls>'] },
+			['blocking', 'requestHeaders']
+		);
+	}
+}
+
 async function getTwitterBotRedirectLink(expandedTCOLink: string) {
 	try {
 		if (!expandedTCOLink) throw new Error('No link provided');
-		if (!isMozilla) {
-			// Set up rules to modify request headers
-			const rules = getV3Rules();
-			await browser.declarativeNetRequest
-				.updateDynamicRules({
-					removeRuleIds: rules.map((rule) => rule.id),
-					addRules: rules
-				})
-				.then(() => {
-					console.log('RULES ADDED');
-				});
-		} else {
-			browser.webRequest.onBeforeSendHeaders.addListener(
-				(details) => {
-					details?.requestHeaders?.push({ name: 'User-Agent', value: 'Twitterbot/1.0' });
-					return { requestHeaders: details.requestHeaders };
-				},
-				{ urls: ['<all_urls>'] },
-				['blocking', 'requestHeaders']
-			);
-		}
+		await setUserAgentHeader(TWITTER_UA);
 		const resp = await fetch(expandedTCOLink, {
 			method: 'GET'
 		});
 
-		const twitterBotRedirectLink = resp.headers.get('Location');
-		return twitterBotRedirectLink || resp.url;
+		const twitterBotRedirectLink = resp.headers.get('Location') || resp.url;
+
+		return twitterBotRedirectLink;
 	} catch (error) {
 		console.log('ERROR GETTING Twitter Bot REDIRECT', error);
 		return null;
@@ -86,26 +106,7 @@ async function getTwitterBotRedirectLink(expandedTCOLink: string) {
 
 async function getUserRedirectLink(expandedTCOLink: string) {
 	try {
-		if (!isMozilla) {
-			// remove the rules after the request
-			const rules = getV3Rules();
-			await browser.declarativeNetRequest
-				.updateDynamicRules({
-					removeRuleIds: rules.map((rule) => rule.id)
-				})
-				.then(() => {
-					console.log('RULES REMOVED');
-				});
-		} else {
-			browser.webRequest.onBeforeSendHeaders.addListener(
-				(details) => {
-					details.requestHeaders = details?.requestHeaders?.filter((header) => header.name !== 'User-Agent');
-					return { requestHeaders: details.requestHeaders };
-				},
-				{ urls: ['<all_urls>'] },
-				['blocking', 'requestHeaders']
-			);
-		}
+		await removeUserAgentHeader(TWITTER_UA);
 		const response = await fetch(expandedTCOLink, {
 			method: 'GET'
 		});
@@ -149,7 +150,8 @@ const compareRedirectLinks = async (expandedTCOLink: string) => {
 };
 
 export const checkTwitterRedirectScam = async (link: string) => {
-	const expandedTCOLink = await getExpandedTCORedirectLink(link);
+	let expandedTCOLink = link;
+	if (link.includes('t.co')) expandedTCOLink = (await getExpandedTCORedirectLink(link)) as string;
 	const resp = await compareRedirectLinks(expandedTCOLink as string);
 
 	if (resp) return resp;

@@ -126,7 +126,7 @@ const TwitterPostContentPage: React.FC = () => {
 	if (posts.length) {
 		posts.forEach((post) => {
 			const postContent = post as HTMLElement;
-			const links = post.querySelectorAll('a[href^="https://t.co"]');
+			const links = post.querySelectorAll('a[href^="https://"]');
 			if (links.length) {
 				links.forEach(async (link) => {
 					const anchor = link as HTMLAnchorElement;
