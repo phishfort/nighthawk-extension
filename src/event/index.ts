@@ -270,7 +270,7 @@ browser.runtime.onConnect.addListener(async (port) => {
 	if (port.name === process.env.REACT_APP_TWITTER_REDIRECT) {
 		port.onMessage.addListener(async (msg) => {
 			if (msg.url) {
-				const response = await checkTwitterRedirectScam(msg.url);
+				const response = await checkTwitterRedirectScam(msg);
 				port.postMessage(response);
 			}
 		});

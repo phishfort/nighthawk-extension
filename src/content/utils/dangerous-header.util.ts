@@ -61,3 +61,46 @@ export const createDangerousHeader = (text = 'THIS ACCOUNT HAS BEEN FLAGGED AS D
 
 	return header;
 };
+
+export const createDangerFooter = (text = 'Remove warning', customStyle: any = {}) => {
+	const footer = document.createElement('div');
+	footer.id = 'nh-dangerous-footer';
+	footer.style.display = 'flex';
+	footer.style.justifyContent = 'space-between';
+	footer.style.alignItems = 'center';
+	footer.style.width = 'calc(100% + 2px)';
+	footer.style.height = '40px';
+	footer.style.position = 'absolute';
+	footer.style.bottom = '0px';
+	footer.style.right = '0px';
+
+	const image = document.createElement('img');
+	image.id = 'dangerous-border-image';
+	image.src = browser?.runtime?.getURL('static/media/bg-low-poly-red.bae263b671da993ff138.png');
+	image.style.objectFit = 'cover';
+	image.style.width = 'calc(100% + 2px)';
+	image.style.height = 'calc(100% + 1px)';
+	image.style.zIndex = '2';
+	image.style.opacity = '0.5';
+
+	const warningText = document.createElement('div');
+	warningText.style.display = 'flex';
+	warningText.style.alignItems = 'center';
+	warningText.style.height = '40px';
+	warningText.style.position = 'absolute';
+	warningText.style.right = 'calc(50% - 40px)';
+	warningText.style.top = '0px';
+	warningText.style.zIndex = '3';
+	warningText.style.color = 'white';
+	warningText.style.fontSize = customStyle?.fontSize || '14px';
+	warningText.style.fontFamily = 'Helvetica';
+	warningText.style.fontWeight = customStyle?.fontWeight || 'normal';
+	warningText.style.cursor = 'pointer';
+	warningText.style.textDecorationLine = 'underline';
+
+	warningText.append(text);
+	footer.append(image);
+	footer.append(warningText);
+
+	return footer;
+};

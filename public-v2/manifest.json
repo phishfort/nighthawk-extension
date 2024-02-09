@@ -34,15 +34,6 @@
 		"scripts": ["./static/js/event.js"],
 		"persistent": true
 	},
-	"permissions": [
-		"activeTab",
-		"tabs",
-		"unlimitedStorage",
-		"storage",
-		"webNavigation",
-		"webRequest",
-		"webRequestBlocking",
-		"<all_urls>"
-	],
+	"permissions": ["activeTab", "tabs", "unlimitedStorage", "storage", "webNavigation", "<all_urls>"],
 	"web_accessible_resources": ["static/media/*.png"]
 }
