@@ -20,6 +20,7 @@ export const createDangerousHeader = (text = 'THIS ACCOUNT HAS BEEN FLAGGED AS D
 	image.style.width = 'calc(100% + 2px)';
 	image.style.height = 'calc(100% + 1px)';
 	image.style.zIndex = '2';
+	image.style.opacity = '0.5';
 
 	const logoContainer = document.createElement('div');
 	logoContainer.style.display = 'flex';

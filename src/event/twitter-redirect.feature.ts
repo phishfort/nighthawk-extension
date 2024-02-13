@@ -1,5 +1,3 @@
-import { getValidUrl } from '../api/utils/validate-url';
-
 const getExpandedTCORedirectLink = async (tcoUrl: string) => {
 	try {
 		const resp = await fetch(tcoUrl, {
@@ -26,12 +24,11 @@ const getExpandedTCORedirectLink = async (tcoUrl: string) => {
 const compareRedirectLinks = async (expandedTCOLink: string, fromTwitter: string) => {
 	try {
 		const userRedirectLink = expandedTCOLink;
-		const twitterBotRedirectLink = `https://${fromTwitter}`;
-		const twitterHost = getValidUrl(new URL(twitterBotRedirectLink).host);
-		const userHost = getValidUrl(new URL(userRedirectLink).host);
+		const twitterHost = fromTwitter.trim();
+		const userHost = new URL(userRedirectLink).host;
 
-		if (twitterHost !== userHost) {
-			const reason = `Redirect SCAM! : ${twitterHost} vs ${userHost}`;
+		if (!userHost.includes(twitterHost)) {
+			const reason = `Redirect Link: ${twitterHost} vs ${userHost}`;
 			return {
 				isScam: true,
 				reason
@@ -39,7 +36,7 @@ const compareRedirectLinks = async (expandedTCOLink: string, fromTwitter: string
 		} else if (twitterHost && !userHost) {
 			return {
 				isScam: true,
-				reason: 'The link is a Potential Twitter redirect scam!'
+				reason: 'The link is a potential Twitter redirect scam!'
 			};
 		}
 
