@@ -126,66 +126,81 @@ const TwitterPostContentPage: React.FC = () => {
 	if (posts.length) {
 		posts.forEach((post) => {
 			const postContent = post as HTMLElement;
-			const links = post.querySelectorAll('a[href^="http"]');
+			// ignore if the post is from a safe account
+			const accounts = postContent.querySelectorAll('a[href^="/"]');
+			if (accounts.length) {
+				accounts.forEach((account) => {
+					const acc = account as HTMLAnchorElement;
+					const href = acc.href;
+					const author = getTweetAuthorAcc(href);
+					if (!existedHrefs.find((el) => el === author)) {
+						setExistedHrefs((prev) => [...prev, author]);
+						handleCheckScam(author);
+					}
 
-			if (links.length) {
-				links.forEach(async (link) => {
-					const anchor = link as HTMLAnchorElement;
-					const href = anchor.href;
-					const text = anchor.textContent;
-					if (!text) return null;
-					if (!href) return null;
-					if (!existedHrefs.find((el) => el === href)) {
-						if (text.startsWith('From ')) {
-							const fromTwitter = text.split('From ')[1];
-							setExistedHrefs((prev) => [...prev, href]);
-							const port = browser.runtime.connect({
-								name: process.env.REACT_APP_TWITTER_REDIRECT
-							});
-							port.postMessage({ url: href, fromTwitter: fromTwitter });
-							port.onMessage.addListener((response: any) => {
-								if (response) {
-									const { isScam, reason } = response;
-									if (isScam) {
-										const finishedBorder = postContent.querySelector('#dangerous-border');
-										if (!finishedBorder) {
-											postContent.style.marginTop = '40px';
-											postContent.style.boxSizing = 'border-box';
-											postContent.style.border = '2px solid #C30303';
-											const header = createDangerousHeader(reason, { fontSize: '13px', fontWeight: 'bold' });
-											const footer = createDangerFooter('Remove warning', { fontSize: '15px', fontWeight: 'bold' });
-											footer.onclick = () => {
-												postContent.style.marginTop = '0';
-												postContent.style.border = 'none';
-												header.remove();
-												footer.remove();
-												const allLinks = postContent.querySelectorAll(`a[href="${href}"]`);
-												if (allLinks.length) {
-													allLinks.forEach((el) => {
-														const l = el as HTMLAnchorElement;
-														l.style.pointerEvents = 'auto';
-													});
+					if (checkData && checkData[author] === EWebStatus.SAFE) return;
+
+					const links = post.querySelectorAll('a[href^="http"]');
+					if (links.length) {
+						links.forEach(async (link) => {
+							const anchor = link as HTMLAnchorElement;
+							const href = anchor.href;
+							const text = anchor.textContent;
+							if (!text) return null;
+							if (!href) return null;
+							if (!existedHrefs.find((el) => el === href)) {
+								if (text.startsWith('From ')) {
+									const fromTwitter = text.split('From ')[1];
+									setExistedHrefs((prev) => [...prev, href]);
+									const port = browser.runtime.connect({
+										name: process.env.REACT_APP_TWITTER_REDIRECT
+									});
+									port.postMessage({ url: href, fromTwitter: fromTwitter });
+									port.onMessage.addListener((response: any) => {
+										if (response) {
+											const { isScam, reason } = response;
+											if (isScam) {
+												const finishedBorder = postContent.querySelector('#dangerous-border');
+												if (!finishedBorder) {
+													postContent.style.marginTop = '40px';
+													postContent.style.boxSizing = 'border-box';
+													postContent.style.border = '2px solid #C30303';
+													const header = createDangerousHeader(reason, { fontSize: '13px', fontWeight: 'bold' });
+													const footer = createDangerFooter('Remove warning', { fontSize: '15px', fontWeight: 'bold' });
+													footer.onclick = () => {
+														postContent.style.marginTop = '0';
+														postContent.style.border = 'none';
+														header.remove();
+														footer.remove();
+														const allLinks = postContent.querySelectorAll(`a[href="${href}"]`);
+														if (allLinks.length) {
+															allLinks.forEach((el) => {
+																const l = el as HTMLAnchorElement;
+																l.style.pointerEvents = 'auto';
+															});
+														}
+													};
+													postContent.prepend(header);
+													postContent.append(footer);
+													// disable scam link
+													const allLinks = postContent.querySelectorAll(`a[href="${href}"]`);
+													if (allLinks.length) {
+														allLinks.forEach((el) => {
+															const l = el as HTMLAnchorElement;
+															l.style.pointerEvents = 'none';
+														});
+													}
 												}
-											};
-											postContent.prepend(header);
-											postContent.append(footer);
-											// disable scam link
-											const allLinks = postContent.querySelectorAll(`a[href="${href}"]`);
-											if (allLinks.length) {
-												allLinks.forEach((el) => {
-													const l = el as HTMLAnchorElement;
-													l.style.pointerEvents = 'none';
-												});
 											}
 										}
-									}
-								}
 
-								return null;
-							});
-						}
+										return null;
+									});
+								}
+							}
+							return null;
+						});
 					}
-					return null;
 				});
 			}
 		});
