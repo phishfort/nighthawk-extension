@@ -74,6 +74,19 @@ export class StorageService {
 	public async removeTrustedListFromStorage() {
 		await browser.storage.local.remove(STORAGE_KEYS.TRUSTED_LIST);
 	}
+
+	public async getShortUrlsFromStorage() {
+		const data = await browser.storage.local.get(STORAGE_KEYS.SHORT_URLS);
+		return data[STORAGE_KEYS.SHORT_URLS];
+	}
+
+	public setShortUrlsToStorage(list: string[]) {
+		browser.storage.local.set({ [STORAGE_KEYS.SHORT_URLS]: list });
+	}
+
+	public async removeShortUrlsFromStorage() {
+		await browser.storage.local.remove(STORAGE_KEYS.SHORT_URLS);
+	}
 }
 
 export const storageService = new StorageService();

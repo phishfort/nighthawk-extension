@@ -151,6 +151,8 @@ const TwitterPostContentPage: React.FC = () => {
 							if (!existedHrefs.find((el) => el === href)) {
 								if (text.startsWith('From ')) {
 									const fromTwitter = text.split('From ')[1];
+									// check if this is domain not text
+									if (!fromTwitter.includes('.')) return null;
 									setExistedHrefs((prev) => [...prev, href]);
 									const port = browser.runtime.connect({
 										name: process.env.REACT_APP_TWITTER_REDIRECT

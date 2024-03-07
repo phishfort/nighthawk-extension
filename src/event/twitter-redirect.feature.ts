@@ -1,3 +1,5 @@
+import { storageService } from '../api/services';
+
 const getExpandedTCORedirectLink = async (tcoUrl: string) => {
 	try {
 		const resp = await fetch(tcoUrl, {
@@ -54,16 +56,52 @@ const compareRedirectLinks = async (expandedTCOLink: string, fromTwitter: string
 };
 
 export const checkTwitterRedirectScam = async (msg: IMSGfromTwitter) => {
-	let expandedTCOLink = msg.url;
-	if (expandedTCOLink.includes('t.co')) expandedTCOLink = (await getExpandedTCORedirectLink(expandedTCOLink)) as string;
-	const resp = await compareRedirectLinks(expandedTCOLink as string, msg.fromTwitter.trim());
+	try {
+		const twitterRedirectUrl = msg.fromTwitter.trim();
+		let userRedirectUrl = msg.url;
+		const shortUrls = await getShortUrls();
 
-	if (resp) return resp;
-	return {
-		isScam: false,
-		reason: ''
-	};
+		if (userRedirectUrl.includes('t.co')) {
+			userRedirectUrl = (await getExpandedTCORedirectLink(userRedirectUrl)) as string;
+		}
+		if (twitterRedirectUrl.split('.').length < 2 || !userRedirectUrl) return { isScam: false, reason: '' };
+		const host = new URL(userRedirectUrl).host;
+		if (shortUrls.includes(host)) {
+			userRedirectUrl = (await getExpandedTCORedirectLink(userRedirectUrl)) as string;
+		}
+
+		const resp = await compareRedirectLinks(userRedirectUrl, twitterRedirectUrl);
+		if (resp) return resp;
+		return {
+			isScam: false,
+			reason: ''
+		};
+	} catch (error) {
+		console.log('ERROR CHECKING TWITTER REDIRECT SCAM', error);
+		return {
+			isScam: false,
+			reason: ''
+		};
+	}
 };
+
+export const getShortUrls = async () => {
+	let shortUrls = await storageService.getShortUrlsFromStorage();
+	if (!shortUrls) {
+		const resp = await fetch('https://cdn.jsdelivr.net/gh/PeterDaveHello/url-shorteners/list');
+		const data = await resp.text();
+		shortUrls = data.split('\n').filter((el) => el !== '' && !el.startsWith('#'));
+
+		storageService.setShortUrlsToStorage(shortUrls);
+	}
+
+	return shortUrls;
+};
+
+// invalidate short urls cache every 24 hours
+setInterval(() => {
+	storageService.removeShortUrlsFromStorage();
+}, 1000 * 60 * 60 * 24);
 
 export interface IMSGfromTwitter {
 	url: string;
