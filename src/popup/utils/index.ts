@@ -26,10 +26,10 @@ export const getInitRoute = (activeTab: string, type: EWebStatus) => {
 	return !activeTab?.includes('http')
 		? ROUTES.UNKNOWN
 		: type === EWebStatus.DANGEROUS
-		? ROUTES.DANGEROUS
-		: type === EWebStatus.SAFE
-		? ROUTES.VALID
-		: ROUTES.UNKNOWN;
+			? ROUTES.DANGEROUS
+			: type === EWebStatus.SAFE
+				? ROUTES.VALID
+				: ROUTES.UNKNOWN;
 };
 
 export const options: FormSelectProps[] = [
@@ -37,7 +37,8 @@ export const options: FormSelectProps[] = [
 	{ value: EType.TWITTER, label: 'Twitter Account' },
 	{ value: EType.FACEBOOK, label: 'Facebook Account, Page, or Group' },
 	{ value: EType.YOUTUBE, label: 'Youtube Account' },
-	{ value: EType.LINKEDIN, label: 'LinkedIn Account' }
+	{ value: EType.LINKEDIN, label: 'LinkedIn Account' },
+	{ value: EType.X, label: 'X account' }
 ];
 
 export const getNextOption = (type: EType) => {
@@ -49,8 +50,15 @@ export const handleFormType = (
 	url: string,
 	setCurrentType: Dispatch<React.SetStateAction<FormSelectProps | null>>
 ) => {
+	let validateUrl = url;
+	try {
+		const { host } = new URL(url.toLowerCase());
+		validateUrl = removeWWW(host);
+	} catch (error) {
+		console.log(error);
+	}
 	const socMediaType = Object.entries(SOC_MEDIA_TYPES).reduce(
-		(acc, [key, value]) => (url.includes(value) ? key : acc),
+		(acc, [key, value]) => (validateUrl.includes(value) ? key : acc),
 		''
 	);
 
@@ -59,7 +67,7 @@ export const handleFormType = (
 		if (nextOption) setCurrentType(nextOption);
 	}
 
-	if (!socMediaType && currentType !== EType.WEBSITE && url) {
+	if (!socMediaType && currentType !== EType.WEBSITE && validateUrl) {
 		const nextOption = getNextOption(EType.WEBSITE);
 		if (nextOption) setCurrentType(nextOption);
 	}
@@ -70,7 +78,9 @@ export const PLACEHOLDER_SCAM_MSG = {
 	[EType.YOUTUBE]: 'https://www.youtube.com/@bad-channel',
 	[EType.FACEBOOK]: 'https://www.facebook.com/bad-user',
 	[EType.LINKEDIN]: 'https://www.linkedin.com/in/bad-user',
-	[EType.TWITTER]: 'https://twitter.com/bad-user'
+	[EType.TWITTER]: 'https://twitter.com/bad-user',
+	[EType.X]: 'https://x.com/bad-user'
+
 };
 
 export const handleScamPlaceholder = (currentType: EType) => {
@@ -85,6 +95,8 @@ export const handleScamPlaceholder = (currentType: EType) => {
 			return PLACEHOLDER_SCAM_MSG[EType.LINKEDIN];
 		case EType.TWITTER:
 			return PLACEHOLDER_SCAM_MSG[EType.TWITTER];
+		case EType.X:
+			return PLACEHOLDER_SCAM_MSG[EType.X];
 		default:
 			return PLACEHOLDER_SCAM_MSG[EType.WEBSITE];
 	}
@@ -145,6 +157,10 @@ export const validateUrl = (url: string, path: string, search?: string): string 
 		return `${url}${path}`;
 	}
 
+	if (typeOfUrl.includes(EType.X)) {
+		return `${url}/${path.split('/')[1]}`;
+	}
+
 	return url;
 };
 
@@ -155,10 +171,7 @@ export const getValidUrl = (url: string, noWWW?: boolean) => {
 
 		if (host.includes('www.')) {
 			dns = host.split('www.')[1];
-		} else if (host.split('.')[0].length <= 3) {
-			dns = host.split('.')[1];
 		}
-
 		const res = validateUrl(dns, pathname, search);
 
 		return noWWW ? res : `www.${res}`;
@@ -172,6 +185,7 @@ export const getUrlType = (url: string) => {
 	if (url.includes(EType.TWITTER)) return EType.TWITTER;
 	if (url.includes(EType.LINKEDIN)) return EType.LINKEDIN;
 	if (url.includes(EType.YOUTUBE)) return EType.YOUTUBE;
+	if (url.includes('x.com')) return EType.X;
 	return EType.WEBSITE;
 };
 

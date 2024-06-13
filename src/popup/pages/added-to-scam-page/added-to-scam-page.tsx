@@ -1,3 +1,4 @@
+//@ts-nocheck
 import * as React from 'react';
 import { Link } from 'react-router-dom';
 import { Grid } from '@mui/material';
@@ -35,7 +36,7 @@ const AddedToScamPage: React.FC = () => {
 		getUserInfo();
 	}, []);
 
-	const url = scamData?.url ? getValidUrl(scamData?.url) : '';
+	const url = scamData?.url ? getValidUrl(scamData?.url, true) : '';
 	const reportedType = url ? options.find((el) => el.value == getUrlType(url))?.label : options[0].label;
 	return (
 		<PopupContainer>
