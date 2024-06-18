@@ -1,7 +1,7 @@
 {
 	"name": "Nighthawk by PhishFort",
 	"description": "Protect yourself from phishing attacks.",
-	"version": "1.0.1.18",
+	"version": "1.0.1.20",
 	"browser_specific_settings": {
 		"gecko": {
 			"strict_min_version": "54.0a1"
@@ -22,8 +22,12 @@
 	},
 	"content_scripts": [
 		{
-			"matches": ["<all_urls>"],
-			"js": ["./static/js/content.js"],
+			"matches": [
+				"<all_urls>"
+			],
+			"js": [
+				"./static/js/content.js"
+			],
 			"match_about_blank": true,
 			"all_frames": true,
 			"run_at": "document_end"
@@ -31,9 +35,20 @@
 	],
 	"content_security_policy": "script-src 'self' object-src 'self'",
 	"background": {
-		"scripts": ["./static/js/event.js"],
+		"scripts": [
+			"./static/js/event.js"
+		],
 		"persistent": true
 	},
-	"permissions": ["activeTab", "tabs", "unlimitedStorage", "storage", "webNavigation", "<all_urls>"],
-	"web_accessible_resources": ["static/media/*.png"]
+	"permissions": [
+		"activeTab",
+		"tabs",
+		"unlimitedStorage",
+		"storage",
+		"webNavigation",
+		"<all_urls>"
+	],
+	"web_accessible_resources": [
+		"static/media/*.png"
+	]
 }
