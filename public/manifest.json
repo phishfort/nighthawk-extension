@@ -1,26 +1,57 @@
 {
-	"name": "Nighthawk by PhishFort",
-	"description": "Protect yourself from phishing attacks.",
-	"version": "1.0.1.18",
-	"manifest_version": 3,
-	"icons": { "24": "/assets/logo/ic-nighthawk-trusted.png", "48": "/assets/logo/ic-nighthawk-trusted.png" },
-	"action": {
-		"default_icon": { "24": "/assets/logo/ic-nighthawk-unknown.png", "48": "/assets/logo/ic-nighthawk-unknown.png" },
-		"default_popup": "index.html",
-		"default_title": "Nighthawk by PhishFort"
-	},
-	"content_scripts": [
-		{
-			"matches": ["http://*/*", "https://*/*"],
-			"js": ["./static/js/content.js"],
-			"match_about_blank": true,
-			"all_frames": false,
-			"run_at": "document_end"
-		}
-	],
-	"background": { "service_worker": "./static/js/event.js" },
-	"permissions": ["activeTab", "tabs", "unlimitedStorage", "storage", "webNavigation"],
-	"host_permissions": ["*://*/*"],
-	"web_accessible_resources": [{ "resources": ["static/media/*.png"], "matches": ["http://*/*", "https://*/*"] }],
-	"key": "$CRX_KEY"
+    "name": "Nighthawk by PhishFort",
+    "description": "Protect yourself from phishing attacks.",
+    "version": "1.0.1.20",
+    "manifest_version": 3,
+    "icons": {
+        "24": "/assets/logo/ic-nighthawk-trusted.png",
+        "48": "/assets/logo/ic-nighthawk-trusted.png"
+    },
+    "action": {
+        "default_icon": {
+            "24": "/assets/logo/ic-nighthawk-unknown.png",
+            "48": "/assets/logo/ic-nighthawk-unknown.png"
+        },
+        "default_popup": "index.html",
+        "default_title": "Nighthawk by PhishFort"
+    },
+    "content_scripts": [
+        {
+            "matches": [
+                "http://*/*",
+                "https://*/*"
+            ],
+            "js": [
+                "./static/js/content.js"
+            ],
+            "match_about_blank": true,
+            "all_frames": false,
+            "run_at": "document_end"
+        }
+    ],
+    "background": {
+        "service_worker": "./static/js/event.js"
+    },
+    "permissions": [
+        "activeTab",
+        "tabs",
+        "unlimitedStorage",
+        "storage",
+        "webNavigation"
+    ],
+    "host_permissions": [
+        "*://*/*"
+    ],
+    "web_accessible_resources": [
+        {
+            "resources": [
+                "static/media/*.png"
+            ],
+            "matches": [
+                "http://*/*",
+                "https://*/*"
+            ]
+        }
+    ],
+    "key": "$CRX_KEY"
 }

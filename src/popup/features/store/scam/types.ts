@@ -12,6 +12,7 @@ export interface IScamState extends IStateWithAsync {
 	[ECheckDataType.FACEBOOK]: ICheckData;
 	[ECheckDataType.LINKEDIN]: ICheckData;
 	[ECheckDataType.GOOGLE]: ICheckData;
+	[ECheckDataType.X]: ICheckData;
 }
 
 export const initialState: IScamState = {
@@ -21,7 +22,8 @@ export const initialState: IScamState = {
 	[ECheckDataType.TWITTER]: {},
 	[ECheckDataType.FACEBOOK]: {},
 	[ECheckDataType.LINKEDIN]: {},
-	[ECheckDataType.GOOGLE]: {}
+	[ECheckDataType.GOOGLE]: {},
+	[ECheckDataType.X]: {}
 };
 
 export enum SCAM_ACTIONS_TYPES {

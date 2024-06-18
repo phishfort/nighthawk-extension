@@ -1,6 +1,6 @@
 import * as Yup from 'yup';
 
-export const URL_MATCH = /^(http(s)?:\/\/.)[-a-zA-Z0-9@:%._\\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\\+.~#?&//=]*)/;
+export const URL_MATCH = /^(http(s)?:\/\/.)[-a-zA-Z0-9@:%._\\+~#=]{0,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\\+.~#?&//=]*)/; // update to support x.com
 export const NOT_EMPTY = /^\S*$/;
 
 export const getOptionalUrlValidator = () =>
@@ -15,8 +15,7 @@ export const getOptionalUrlValidator = () =>
 export const getStrictOptionalUrlValidator = (isScam?: boolean) =>
 	getOptionalUrlValidator().matches(
 		URL_MATCH,
-		`Sorry, ${
-			isScam ? "the item couldn't be reported" : 'we could not add the item to your list'
+		`Sorry, ${isScam ? "the item couldn't be reported" : 'we could not add the item to your list'
 		}. Please, make sure it complies with the required link format and try again`
 	);
 

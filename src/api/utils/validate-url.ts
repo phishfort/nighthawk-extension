@@ -20,7 +20,17 @@ export function getValidUrl(url: string): string {
 		if (!validUrl.includes('://')) {
 			validUrl = 'https://' + validUrl;
 		}
-		const { pathname, searchParams } = new URL(validUrl);
+
+		let pathname = '';
+		let searchParams = new URLSearchParams();
+		try {
+			const urlObj = new URL(validUrl);
+			pathname = urlObj.pathname;
+			searchParams = urlObj.searchParams;
+		} catch (error) {
+			console.log('Error in getValidUrl', error);
+			return validUrl;
+		}
 
 		// facebook
 		if (validUrl.includes('facebook.com')) {
@@ -73,7 +83,7 @@ export function getValidUrl(url: string): string {
 		}
 
 		// twitter
-		if (validUrl.includes('twitter.com')) {
+		if (validUrl.includes('twitter.com') || validUrl.includes('x.com')) {	// x.com added
 			return pathname.split('/').filter(Boolean)[0] || validUrl; // check account if not author
 		}
 

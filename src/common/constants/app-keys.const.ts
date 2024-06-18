@@ -19,7 +19,8 @@ export const SOC_MEDIA = {
 	YOUTUBE: 'www.youtube.com',
 	TWITTER: 'twitter.com',
 	FACEBOOK: 'www.facebook.com',
-	LINKEDIN: 'linkedin.com'
+	LINKEDIN: 'linkedin.com',
+	X: 'x.com'
 };
 
 export const HOST_KEYS = {
@@ -33,7 +34,8 @@ export const SOC_MEDIA_TYPES = {
 	[EType.TWITTER]: 'twitter.com',
 	[EType.FACEBOOK]: 'facebook.com',
 	[EType.LINKEDIN]: 'linkedin.com',
-	[EType.GOOGLE]: 'google.com'
+	[EType.GOOGLE]: 'google.com',
+	[EType.X]: 'x.com'
 };
 
 export const checkList = ['google.com', 'github.com'];

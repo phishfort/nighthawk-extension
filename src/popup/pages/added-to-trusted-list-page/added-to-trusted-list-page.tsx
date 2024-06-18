@@ -13,7 +13,7 @@ const AddedToTrustedListPage: React.FC = () => {
 	const addedInfo = useAppSelector(selectAddedInfo);
 	const error = useAppSelector(selectTrustedListError);
 	const alreadyExist = error === 'item already exists';
-	const url = addedInfo?.url ? getValidUrl(addedInfo?.url) : '';
+	const url = addedInfo?.url ? getValidUrl(addedInfo?.url, true) : '';
 
 	return (
 		<PopupContainer>

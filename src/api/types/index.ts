@@ -198,7 +198,8 @@ export enum EType {
 	FACEBOOK = 'facebook',
 	YOUTUBE = 'youtube',
 	LINKEDIN = 'linkedin',
-	GOOGLE = 'google'
+	GOOGLE = 'google',
+	X = 'x'
 }
 
 export enum EWebStatus {
@@ -212,5 +213,6 @@ export enum ECheckDataType {
 	TWITTER = 'twitterCheckData',
 	FACEBOOK = 'facebookCheckData',
 	YOUTUBE = 'youtubeCheckData',
-	LINKEDIN = 'linkedinCheckData'
+	LINKEDIN = 'linkedinCheckData',
+	X = 'xCheckData'
 }

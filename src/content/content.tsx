@@ -57,7 +57,7 @@ function ContentComponent() {
 			{host === HOST_KEYS.YOUTUBE && <YoutubeContentPage />}
 			{host === HOST_KEYS.NIGHTHAWK_WEB_VERSION && <TokenManagerComponent />}
 			{href.includes(new URL(`${process.env.REACT_APP_WEB_URL}`).host) && <MessageManagerComponent />}
-			{host === HOST_KEYS.TWITTER && <TwitterContentPage />}
+			{host === HOST_KEYS.TWITTER || host === HOST_KEYS.X && <TwitterContentPage />}
 			{host === HOST_KEYS.GOOGLE && <GoogleContentPage />}
 			{host === HOST_KEYS.FACEBOOK && <FacebookContentPage />}
 			{host.includes(HOST_KEYS.LINKEDIN) && <LinkedinContentPage />}
