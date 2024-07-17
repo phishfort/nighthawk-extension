@@ -8,9 +8,11 @@ import { ITrustedList } from '../../popup/pages/trusted-list-page/trusted-list.t
 import { getValidUrl } from '../utils/validate-url';
 import { browser } from '../../browser-service';
 import { SOC_MEDIA_TYPES } from '../../common/constants/app-keys.const';
+import { IFlaggedSite, Website } from '../../rule-engine/types';
+import RuleEngine from '../../rule-engine';
 
 class ScamReportService {
-	constructor(private authHttpService: EnhancedWithAuthHttpService, private httpService: HttpService) {}
+	constructor(private authHttpService: EnhancedWithAuthHttpService, private httpService: HttpService) { }
 
 	async addScamReport(data: IReportScam) {
 		return this.authHttpService.post<Iuuid, IReportScam>('user/report-list', data);
@@ -20,11 +22,39 @@ class ScamReportService {
 		return this.authHttpService.post<Iuuid, IReportScam>('user/report-list/guest', data);
 	}
 
-	async checkScam(data: { url: string; type?: ECheckDataType }): Promise<ICheckScamResponse | null | void> {
+	async checkScamFromRuleEngine(website?: Website, url?: string): Promise<ICheckScamResponse | null | void> {
+		// check if url is in flagged list
+		const flaggedSites = await storageService.getFlaggedListFromStorage();
+		const isAlreadyFlagged = flaggedSites?.length ? flaggedSites?.some((site: IFlaggedSite) => site.url === url) : false;
+		if (isAlreadyFlagged) {
+			return { status: EWebStatus.DANGEROUS };
+		}
+
+		const ruleEngine = new RuleEngine();
+		const result = await ruleEngine.checkWebsite(website);
+		// add to flagged list if flagged
+		if (result.status === "flagged") {
+			storageService.setFlaggedListToStorage({
+				url: url,
+				name: result.matchedRule?.name,
+				ruleId: result.matchedRule?.ruleId
+			});
+			return { status: EWebStatus.DANGEROUS };
+		}
+
+		return { status: EWebStatus.UNKNOWN }
+	}
+
+	async checkScam(data: { url: string; type?: ECheckDataType, requestFrom?: string, website?: Website }): Promise<ICheckScamResponse | null | void> {
 		if (Object.values(SOC_MEDIA_TYPES).some((el) => getValidUrl(el) === getValidUrl(data.url))) {
 			return {
 				status: EWebStatus.SAFE
 			};
+		}
+
+		if (data?.requestFrom === "ruleEngine" && data?.website) {
+			const response = await this.checkScamFromRuleEngine(data?.website, data?.url);
+			return response;
 		}
 
 		// check if url is in nighthawk list

@@ -1,6 +1,7 @@
 import { STORAGE_KEYS } from '../../common/constants/app-keys.const';
 import { browser } from '../../browser-service';
 import { INighthawkResponse, ITrustedList } from '../../popup/pages/trusted-list-page/trusted-list.types';
+import { IFlaggedSite } from '../../rule-engine/types';
 
 export class StorageService {
 	public setTokenToStorage(token: string) {
@@ -73,6 +74,35 @@ export class StorageService {
 
 	public async removeTrustedListFromStorage() {
 		await browser.storage.local.remove(STORAGE_KEYS.TRUSTED_LIST);
+	}
+
+	public async getRulesFromStorage() {
+		const data = await browser.storage.local.get(STORAGE_KEYS.RULES_LIST);
+		return data[STORAGE_KEYS.RULES_LIST];
+	}
+
+	public setRulesToStorage(rules: any) {
+		browser.storage.local.set({ [STORAGE_KEYS.RULES_LIST]: rules });
+	}
+
+	public async removeRulesFromStorage() {
+		await browser.storage.local.remove(STORAGE_KEYS.RULES_LIST);
+	}
+
+	public async getFlaggedListFromStorage() {
+		const data = await browser.storage.local.get(STORAGE_KEYS.FLAGGED_SITES_LIST);
+		return data[STORAGE_KEYS.FLAGGED_SITES_LIST];
+	}
+
+	public setFlaggedListToStorage(flaggedSites: IFlaggedSite) {
+		this.getFlaggedListFromStorage().then((list: IFlaggedSite[]) => {
+			const updatedFlaggedList = list?.length ? [...list, flaggedSites] : [flaggedSites];
+			browser.storage.local.set({ [STORAGE_KEYS.FLAGGED_SITES_LIST]: updatedFlaggedList });
+		});
+	}
+
+	public async removeFlaggedListFromStorage() {
+		await browser.storage.local.remove(STORAGE_KEYS.FLAGGED_SITES_LIST);
 	}
 }
 

@@ -12,7 +12,9 @@ export const STORAGE_KEYS = {
 	NIGHTHAWK_LIST: 'NIGHTHAWK_LIST',
 	NH_CACHE_TIME: 'NH_CACHE_TIME',
 	DANGER_AGREE_LIST: 'DANGER_AGREE_LIST',
-	TRUSTED_LIST: 'TRUSTED_LIST'
+	TRUSTED_LIST: 'TRUSTED_LIST',
+	RULES_LIST: 'RULES_LIST',
+	FLAGGED_SITES_LIST: 'FLAGGED_SITES_LIST',
 };
 
 export const SOC_MEDIA = {
@@ -25,7 +27,7 @@ export const SOC_MEDIA = {
 
 export const HOST_KEYS = {
 	...SOC_MEDIA,
-	NIGHTHAWK_WEB_VERSION: 'nighthawk-dashboard.phishfort.com',
+	NIGHTHAWK_WEB_VERSION: 'night-hawk-ui-dev.herokuapp.com',
 	GOOGLE: 'www.google.com'
 };
 

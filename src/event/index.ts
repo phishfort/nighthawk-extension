@@ -9,7 +9,7 @@ import { setGuestGuardianPoints } from '../popup/features/store/user';
 import { REFETCH_TIME, getValidUrl } from '../api/utils/validate-url';
 import { EType, EWebStatus } from '../api/types';
 import { getUrlType, pattern } from '../popup/utils';
-import axios from 'axios';
+import { Website } from '../rule-engine/types';
 
 browser.runtime.onConnect.addListener(function () {
 	console.log('connect!!!');
@@ -36,6 +36,14 @@ browser.runtime.onInstalled.addListener(function (detail) {
 			})
 			.catch(() => {
 				console.log('FAILED TO LOAD LISTS ON INSTALL');
+			});
+
+		loadRules()
+			.then(() => {
+				console.log('SUCCESS LOADED RULES ON INSTALL');
+			})
+			.catch(() => {
+				console.log('FAILED TO LOAD RULES ON INSTALL');
 			});
 	}
 
@@ -197,6 +205,31 @@ browser.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
 		storageService.setDangerAgreeListToStorage(url);
 	}
 
+	if (msg.action === 'loadRules') {
+		loadRules()
+			.then((rules) => {
+				sendResponse({ rules });
+			})
+			.catch(() => {
+				console.log('FAILED TO LOAD RULES ON EXTENSION REQUEST');
+			});
+		return true;
+	}
+
+	if (msg.action === 'checkScamByRuleEngine') {
+		if (msg.payload) {
+			loadRules()
+				.then(() => {
+					const { url, website } = msg.payload;
+					handleFlaggedSites(website, url, sender?.tab?.id as number);
+				})
+				.catch(() => {
+					console.log('FAILED TO LOAD RULES ON EXTENSION REQUEST');
+				});
+		}
+
+		return true;
+	}
 	sendResponse({});
 	return true;
 });
@@ -353,3 +386,67 @@ async function loadLists() {
 		}
 	);
 }
+
+export async function loadRules() {
+	try {
+		const rules = await storageService.getRulesFromStorage();
+		if (rules?.length) return rules;
+
+		const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/rules`, {
+			method: "GET",
+			headers: {
+				"Content-Type": "application/json",
+				'x-api-key': process.env.REACT_APP_NIGHTHAWK_API_KEY!
+			}
+		});
+
+		if (response.ok) {
+			const data = await response.json();
+			storageService.setRulesToStorage(data.rules);
+			return data.rules
+		}
+
+		return [];
+	} catch (error) {
+		console.log("Error fetching rules", error);
+	}
+}
+
+export async function handleFlaggedSites(website: Website, url: string, tabId: number) {
+	try {
+		const response = await scamReportService.checkScam({ url, requestFrom: 'ruleEngine', website });
+		const dangerAgreeList = await storageService.getDangerAgreeListFromStorage();
+		const isDangerAgree = dangerAgreeList?.some((dangerUrl: string) => dangerUrl.includes(getValidUrl(url))) || false;
+
+		if (!response?.status) return;
+		if (response.status === EWebStatus.DANGEROUS) {
+			browser.action.setIcon({
+				path: `/assets/logo/ic-nighthawk-dangerous.png`,
+				tabId
+			});
+			if (!isDangerAgree) {
+				const encodedUrl = encodeURIComponent(url);
+				browser.tabs.update(tabId, {
+					url: `warning.html?url=${encodedUrl}&detected-by=rule-engine`
+				});
+
+			}
+			return;
+		}
+	} catch (error) {
+		console.log("Error checking scam by rule engine");
+	}
+}
+
+// Fetch rules every 12 hours
+const HourInterval = 1000 * 60 * 60 * 12;
+setInterval(async () => {
+	try {
+		await storageService.removeRulesFromStorage();
+		const rules = await loadRules();
+		if (rules.length) storageService.setRulesToStorage(rules);
+		console.log('Rules Re-fetched successfully');
+	} catch (error) {
+		console.log('Error fetching rules');
+	}
+}, HourInterval);
