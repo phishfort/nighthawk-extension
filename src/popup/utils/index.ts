@@ -17,7 +17,7 @@ export const handleRedirect = (url: string) => {
 	});
 };
 
-export const pattern = /^(moz-extension:\/\/|chrome-extension:\/\/).+\/warning\.html(\?url=https?:\/\/.*)?$/;
+export const pattern = /^(moz-extension:\/\/|chrome-extension:\/\/).+\/warning\.html(\?url=.*)?$/;
 
 export const getInitRoute = (activeTab: string, type: EWebStatus) => {
 	if (pattern.test(activeTab)) {

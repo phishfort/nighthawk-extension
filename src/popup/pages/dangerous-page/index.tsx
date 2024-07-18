@@ -31,9 +31,11 @@ const DangerousPage: React.FC = () => {
 	const getDangerURL = () => {
 		try {
 			const parsedUrl = new URL(activeTab);
-			return pattern.test(activeTab) && parsedUrl.searchParams.has('url')
-				? parsedUrl.searchParams.get('url')
-				: activeTab;
+			// decode the URL 
+			if (parsedUrl.searchParams.has('url') && pattern.test(activeTab)) {
+				const decodeURI = decodeURIComponent(parsedUrl.searchParams.get('url') as string)
+				return decodeURI;
+			}
 		} catch (error) {
 			console.error('Error parsing URL:', error);
 			return activeTab;

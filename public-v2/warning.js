@@ -32,7 +32,9 @@ function handleDangerAgree() {
 
 function getDangerURL() {
 	if (url.searchParams.has('url')) {
-		return url.searchParams.get('url');
+		// decodeURIComponent to handle the case when the url contains special
+		const decodeURL = decodeURIComponent(url.searchParams.get('url'))
+		return decodeURL
 	}
 }
 

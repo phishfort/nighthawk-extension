@@ -1,4 +1,3 @@
-let allowedList = [];
 const url = new URL(window.location.href);
 
 // detect if the current page is the warning page
@@ -33,7 +32,9 @@ function handleDangerAgree() {
 
 function getDangerURL() {
 	if (url.searchParams.has('url')) {
-		return url.searchParams.get('url');
+		// decodeURIComponent to handle the case when the url contains special
+		const decodeURL = decodeURIComponent(url.searchParams.get('url'))
+		return decodeURL
 	}
 }
 

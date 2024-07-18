@@ -86,8 +86,9 @@ browser.webNavigation.onBeforeNavigate.addListener(async ({ url, tabId, frameId 
 			tabId
 		});
 		if (!isDangerAgree) {
+			const encodedUrl = encodeURIComponent(url);
 			browser.tabs.update(tabId, {
-				url: `warning.html?url=${url}`
+				url: `warning.html?url=${encodedUrl}&detected-by=nighthawk`
 			});
 		}
 		return;
