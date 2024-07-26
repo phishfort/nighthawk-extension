@@ -9,6 +9,9 @@ import Overload from './components/overload';
 import ContentComponent from './content';
 import './content.css';
 import { browser } from '../browser-service';
+import Website from '../rule-engine/website';
+import { EWebStatus } from '../api/types';
+import { SOCIAL_URLS } from '../rule-engine/utils/constants';
 
 const anchor = document.createElement('div');
 anchor.id = 'nighthawk-content-anchor';
@@ -34,6 +37,23 @@ function connect() {
 	port = browser.runtime.connect({ name: 'foo' });
 	port.postMessage('HELLO FROM CONTENT SCRIPT');
 	port.onDisconnect.addListener(connect);
-	port.onMessage.addListener((msg) => {});
+	port.onMessage.addListener((msg) => { });
 }
 connect();
+
+// when ready
+if (document.readyState === 'complete' || document.readyState === 'interactive') {
+	const website = new Website(document).toJSON()
+	// TODO: avoid check if url is  a social or chrome:// or about: or extension url
+	const isValidWebsiteForCheck = !SOCIAL_URLS.includes(website.url) || !website.url.startsWith('chrome://') || !website.url.startsWith('about:') || !website.url.startsWith('moz-extension://');
+
+	if (isValidWebsiteForCheck && website.url) {
+		browser.runtime.sendMessage({
+			action: 'checkScamByRuleEngine',
+			payload: {
+				website: website,
+				url: document.location.href,
+			}
+		})
+	}
+}

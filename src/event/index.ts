@@ -9,7 +9,7 @@ import { setGuestGuardianPoints } from '../popup/features/store/user';
 import { REFETCH_TIME, getValidUrl } from '../api/utils/validate-url';
 import { EType, EWebStatus } from '../api/types';
 import { getUrlType, pattern } from '../popup/utils';
-import axios from 'axios';
+import { Website } from '../rule-engine/types';
 
 browser.runtime.onConnect.addListener(function () {
 	console.log('connect!!!');
@@ -36,6 +36,14 @@ browser.runtime.onInstalled.addListener(function (detail) {
 			})
 			.catch(() => {
 				console.log('FAILED TO LOAD LISTS ON INSTALL');
+			});
+
+		loadRules()
+			.then(() => {
+				console.log('SUCCESS LOADED RULES ON INSTALL');
+			})
+			.catch(() => {
+				console.log('FAILED TO LOAD RULES ON INSTALL');
 			});
 	}
 
@@ -78,8 +86,9 @@ browser.webNavigation.onBeforeNavigate.addListener(async ({ url, tabId, frameId 
 			tabId
 		});
 		if (!isDangerAgree) {
+			const encodedUrl = encodeURIComponent(url);
 			browser.tabs.update(tabId, {
-				url: `warning.html?url=${url}`
+				url: `warning.html?url=${encodedUrl}&detected-by=nighthawk`
 			});
 		}
 		return;
@@ -172,7 +181,6 @@ browser.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
 		loadLists()
 			.then((lists) => {
 				sendResponse(lists);
-				console.log('FINISHED LOADING LIST ON EXTENSION REQUEST');
 			})
 			.catch(() => {
 				console.log('FAILED TO LOAD LISTS ON EXTENSION REQUEST');
@@ -184,7 +192,6 @@ browser.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
 		loadLists()
 			.then((lists) => {
 				sendResponse(lists);
-				console.log('FINISHED REFETCHING LIST ON EXTENSION REQUEST');
 			})
 			.catch(() => {
 				console.log('FAILED TO REFETCH LISTS ON EXTENSION REQUEST');
@@ -197,6 +204,31 @@ browser.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
 		storageService.setDangerAgreeListToStorage(url);
 	}
 
+	if (msg.action === 'loadRules') {
+		loadRules()
+			.then((rules) => {
+				sendResponse({ rules });
+			})
+			.catch(() => {
+				console.log('FAILED TO LOAD RULES ON EXTENSION REQUEST');
+			});
+		return true;
+	}
+
+	if (msg.action === 'checkScamByRuleEngine') {
+		if (msg.payload) {
+			loadRules()
+				.then(() => {
+					const { url, website } = msg.payload;
+					handleFlaggedSites(website, url, sender?.tab?.id as number);
+				})
+				.catch(() => {
+					console.log('FAILED TO LOAD RULES ON EXTENSION REQUEST');
+				});
+		}
+
+		return true;
+	}
 	sendResponse({});
 	return true;
 });
@@ -204,7 +236,7 @@ browser.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
 browser.runtime.onConnect.addListener(async (port) => {
 	if (port.name === process.env.REACT_APP_WEB_LOGIN) {
 		port.onMessage.addListener((msg) => {
-			console.log('\n message =>', msg);
+			// console.log('\n message =>', msg);
 
 			if (msg.isGuest) {
 				storageService.setGuestTokenToStorage(msg.token);
@@ -248,13 +280,7 @@ browser.runtime.onConnect.addListener(async (port) => {
 		port.onMessage.addListener(async (msg) => {
 			if (msg.shouldUpdateCache) {
 				await storageService.removeTrustedListFromStorage();
-				loadLists()
-					.then(() => {
-						console.log('SUCCESS LOADED LISTS ON WEB REQUEST');
-					})
-					.catch(() => {
-						console.log('FAILED TO LOAD LISTS ON WEB REQUEST');
-					});
+				await loadLists()
 			}
 		});
 	}
@@ -262,7 +288,7 @@ browser.runtime.onConnect.addListener(async (port) => {
 	if (port.name === process.env.REACT_APP_LOAD_NIGHTHAWK_LIST) {
 		port.onMessage.addListener(async (msg) => {
 			if (msg.shouldLoadLists) {
-				loadLists();
+				await loadLists();
 			}
 		});
 	}
@@ -274,7 +300,7 @@ interface IPort extends browser.runtime.Port {
 }
 
 function onMessage(msg: any, port: browser.runtime.Port) {
-	console.log('received', msg, 'from', port.sender);
+	// console.log('received', msg, 'from', port.sender);
 }
 function forceReconnect(port: browser.runtime.Port) {
 	deleteTimer(port);
@@ -290,7 +316,7 @@ function deleteTimer(port: IPort) {
 if (!isMozilla) {
 	browser.runtime.onConnect.addListener((port: any) => {
 		if (port.name !== 'foo') return;
-		console.log('PORT = foo', port.name === 'foo');
+		// console.log('PORT = foo', port.name === 'foo');
 
 		port.postMessage('HELLO FROM BG SCRIPT');
 		port.onMessage.addListener(onMessage);
@@ -301,19 +327,24 @@ if (!isMozilla) {
 
 // Refetch lists on interval
 setInterval(async () => {
-	console.log('REFETCH NIGHTHAWK LISTS');
-	await storageService.removeNighthawkLists();
-
-	loadLists()
-		.then(() => {
-			console.log('REFETCH NIGHTHAWK LISTS SUCCESSFULLY');
-		})
-		.catch(() => console.log('Error REFETCH NIGHTHAWK LISTS'));
+	try {
+		await storageService.removeNighthawkLists();
+		const resp = await loadLists()
+		if (resp) {
+			const { nighthawkList, trustedList } = resp;
+			storageService.setNighthawkListToStorage(nighthawkList);
+			storageService.setTrustedListToStorage(trustedList);
+			console.log('Lists Re-fetched successfully');
+		}
+	} catch (error) {
+		console.log('Error refetching lists');
+	}
 }, REFETCH_TIME);
+
 
 async function loadLists() {
 	const token = await storageService.getTokenFromStorage();
-	Promise.all([storageService.getNighthawkListFromStorage(), storageService.getTrustedListFromStorage()]).then(
+	return Promise.all([storageService.getNighthawkListFromStorage(), storageService.getTrustedListFromStorage()]).then(
 		async (res) => {
 			let nighthawkList = res[0];
 			let trustedList = res[1];
@@ -353,3 +384,67 @@ async function loadLists() {
 		}
 	);
 }
+
+export async function loadRules() {
+	try {
+		const rules = await storageService.getRulesFromStorage();
+		if (rules?.length) return rules;
+
+		const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/rules`, {
+			method: "GET",
+			headers: {
+				"Content-Type": "application/json",
+				'x-api-key': process.env.REACT_APP_NIGHTHAWK_API_KEY!
+			}
+		});
+
+		if (response.ok) {
+			const data = await response.json();
+			storageService.setRulesToStorage(data.rules);
+			return data.rules
+		}
+
+		return [];
+	} catch (error) {
+		console.log("Error fetching rules", error);
+	}
+}
+
+export async function handleFlaggedSites(website: Website, url: string, tabId: number) {
+	try {
+		const response = await scamReportService.checkScam({ url, requestFrom: 'ruleEngine', website });
+		const dangerAgreeList = await storageService.getDangerAgreeListFromStorage();
+		const isDangerAgree = dangerAgreeList?.some((dangerUrl: string) => dangerUrl.includes(getValidUrl(url))) || false;
+
+		if (!response?.status) return;
+		if (response.status === EWebStatus.DANGEROUS) {
+			browser.action.setIcon({
+				path: `/assets/logo/ic-nighthawk-dangerous.png`,
+				tabId
+			});
+			if (!isDangerAgree) {
+				const encodedUrl = encodeURIComponent(url);
+				browser.tabs.update(tabId, {
+					url: `warning.html?url=${encodedUrl}&detected-by=rule-engine`
+				});
+
+			}
+			return;
+		}
+	} catch (error) {
+		console.log("Error checking scam by rule engine");
+	}
+}
+
+// Fetch rules every 12 hours
+const HourInterval = 1000 * 60 * 60 * 12;
+setInterval(async () => {
+	try {
+		await storageService.removeRulesFromStorage();
+		const rules = await loadRules();
+		if (rules.length) storageService.setRulesToStorage(rules);
+		console.log('Rules Re-fetched successfully');
+	} catch (error) {
+		console.log('Error fetching rules');
+	}
+}, HourInterval);
