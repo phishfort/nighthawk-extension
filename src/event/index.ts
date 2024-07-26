@@ -181,7 +181,6 @@ browser.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
 		loadLists()
 			.then((lists) => {
 				sendResponse(lists);
-				console.log('FINISHED LOADING LIST ON EXTENSION REQUEST');
 			})
 			.catch(() => {
 				console.log('FAILED TO LOAD LISTS ON EXTENSION REQUEST');
@@ -193,7 +192,6 @@ browser.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
 		loadLists()
 			.then((lists) => {
 				sendResponse(lists);
-				console.log('FINISHED REFETCHING LIST ON EXTENSION REQUEST');
 			})
 			.catch(() => {
 				console.log('FAILED TO REFETCH LISTS ON EXTENSION REQUEST');
@@ -238,7 +236,7 @@ browser.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
 browser.runtime.onConnect.addListener(async (port) => {
 	if (port.name === process.env.REACT_APP_WEB_LOGIN) {
 		port.onMessage.addListener((msg) => {
-			console.log('\n message =>', msg);
+			// console.log('\n message =>', msg);
 
 			if (msg.isGuest) {
 				storageService.setGuestTokenToStorage(msg.token);
@@ -282,13 +280,7 @@ browser.runtime.onConnect.addListener(async (port) => {
 		port.onMessage.addListener(async (msg) => {
 			if (msg.shouldUpdateCache) {
 				await storageService.removeTrustedListFromStorage();
-				loadLists()
-					.then(() => {
-						console.log('SUCCESS LOADED LISTS ON WEB REQUEST');
-					})
-					.catch(() => {
-						console.log('FAILED TO LOAD LISTS ON WEB REQUEST');
-					});
+				await loadLists()
 			}
 		});
 	}
@@ -296,7 +288,7 @@ browser.runtime.onConnect.addListener(async (port) => {
 	if (port.name === process.env.REACT_APP_LOAD_NIGHTHAWK_LIST) {
 		port.onMessage.addListener(async (msg) => {
 			if (msg.shouldLoadLists) {
-				loadLists();
+				await loadLists();
 			}
 		});
 	}
@@ -308,7 +300,7 @@ interface IPort extends browser.runtime.Port {
 }
 
 function onMessage(msg: any, port: browser.runtime.Port) {
-	console.log('received', msg, 'from', port.sender);
+	// console.log('received', msg, 'from', port.sender);
 }
 function forceReconnect(port: browser.runtime.Port) {
 	deleteTimer(port);
@@ -324,7 +316,7 @@ function deleteTimer(port: IPort) {
 if (!isMozilla) {
 	browser.runtime.onConnect.addListener((port: any) => {
 		if (port.name !== 'foo') return;
-		console.log('PORT = foo', port.name === 'foo');
+		// console.log('PORT = foo', port.name === 'foo');
 
 		port.postMessage('HELLO FROM BG SCRIPT');
 		port.onMessage.addListener(onMessage);
@@ -335,19 +327,24 @@ if (!isMozilla) {
 
 // Refetch lists on interval
 setInterval(async () => {
-	console.log('REFETCH NIGHTHAWK LISTS');
-	await storageService.removeNighthawkLists();
-
-	loadLists()
-		.then(() => {
-			console.log('REFETCH NIGHTHAWK LISTS SUCCESSFULLY');
-		})
-		.catch(() => console.log('Error REFETCH NIGHTHAWK LISTS'));
+	try {
+		await storageService.removeNighthawkLists();
+		const resp = await loadLists()
+		if (resp) {
+			const { nighthawkList, trustedList } = resp;
+			storageService.setNighthawkListToStorage(nighthawkList);
+			storageService.setTrustedListToStorage(trustedList);
+			console.log('Lists Re-fetched successfully');
+		}
+	} catch (error) {
+		console.log('Error refetching lists');
+	}
 }, REFETCH_TIME);
+
 
 async function loadLists() {
 	const token = await storageService.getTokenFromStorage();
-	Promise.all([storageService.getNighthawkListFromStorage(), storageService.getTrustedListFromStorage()]).then(
+	return Promise.all([storageService.getNighthawkListFromStorage(), storageService.getTrustedListFromStorage()]).then(
 		async (res) => {
 			let nighthawkList = res[0];
 			let trustedList = res[1];
