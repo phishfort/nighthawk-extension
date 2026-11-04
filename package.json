@@ -3,7 +3,7 @@
 	"version": "1.0.0",
 	"private": true,
 	"dependencies": {
-		"@craco/craco": "^6.4.3",
+		"@craco/craco": "7.1.0",
 		"@emotion/react": "^11.9.0",
 		"@emotion/styled": "^11.8.1",
 		"@mui/icons-material": "^5.6.0",
@@ -18,7 +18,7 @@
 		"@types/react-dom": "^17.0.14",
 		"@types/react-redux": "^7.1.23",
 		"@types/react-router-dom": "^5.3.3",
-		"axios": "^0.27.2",
+		"axios": "^0.35.0",
 		"caniuse-lite": "^1.0.30001418",
 		"canvas-confetti": "^1.5.1",
 		"date-fns": "^2.29.3",
@@ -26,13 +26,13 @@
 		"formik": "^2.2.9",
 		"lodash.countby": "^4.6.0",
 		"lodash.sorteduniqby": "^4.7.0",
-		"moment": "^2.29.3",
+		"moment": "^2.31.0",
 		"react": "^18.0.0",
 		"react-dom": "^18.0.0",
 		"react-icons": "^4.10.1",
 		"react-redux": "^7.2.8",
-		"react-router-dom": "^6.3.0",
-		"react-scripts": "5.0.0",
+		"react-router-dom": "^6.30.6",
+		"react-scripts": "5.0.1",
 		"react-select": "^5.5.0",
 		"react-swipeable-views": "^0.14.0",
 		"redux": "^4.1.2",
@@ -44,12 +44,11 @@
 		"yup": "^1.2.0"
 	},
 	"scripts": {
-		"start": "react-scripts start",
-		"prebuild": "node scripts/pre-build.js",
-		"postbuild": "node scripts/post-build.js",
-		"build": "env-cmd -f .env craco build",
-		"build-v2": "REACT_APP_MANIFEST_VERSION_V2=true env-cmd -f .env craco build",
-		"build-witout-side-servers": "INLINE_RUNTIME_CHUNK=false craco build",
+		"start": "node scripts/start.js",
+		"build": "env-cmd -f .env node scripts/build.js",
+		"build-v2": "REACT_APP_MANIFEST_VERSION_V2=true env-cmd -f .env node scripts/build.js",
+		"build-witout-side-servers": "INLINE_RUNTIME_CHUNK=false node scripts/build.js",
+		"test:build-scripts": "node --test scripts/*.test.js",
 		"test": "react-scripts test",
 		"eject": "react-scripts eject",
 		"format": "prettier --write \"src/**/*.ts\" \"src/**/*.tsx\""
@@ -77,10 +76,21 @@
 		"@types/chrome": "^0.0.180",
 		"@types/firefox-webext-browser": "^94.0.1",
 		"@types/react-swipeable-views": "^0.13.1",
-		"@types/redux-logger": "^3.0.9",
+		"@types/redux-logger": "3.0.12",
 		"eslint-config-prettier": "^8.5.0",
 		"eslint-plugin-prettier": "^4.2.1",
 		"prettier": "^2.7.1",
 		"redux-logger": "^3.0.6"
+	},
+	"engines": {
+		"node": ">=22.18.0",
+		"yarn": ">=1.22.22"
+	},
+	"resolutions": {
+		"react-scripts/webpack-dev-server": "5.2.7",
+		"react-scripts/@svgr/webpack": "8.1.0",
+		"react-scripts/resolve-url-loader": "5.0.0",
+		"**/serialize-javascript": "7.1.4",
+		"**/underscore": "1.13.8"
 	}
 }
