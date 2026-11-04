@@ -2,14 +2,41 @@ import { wrapStore } from 'webext-redux';
 import { PORT_STORE_NAME } from '../common/constants/app-keys.const';
 import store from './store';
 import { scamReportService, storageService } from '../api/services';
-import { setAuthData, signOut } from '../popup/features/store/auth';
-import { setActiveTab, getActiveTab } from '../content/features/store/source/sourceSlice';
+import { invalidateAuthRequests, setAuthData, signOut } from '../popup/features/store/auth';
+import { setActiveTab } from '../content/features/store/source/sourceSlice';
 import { browser, isMozilla } from '../browser-service';
 import { setGuestGuardianPoints } from '../popup/features/store/user';
-import { REFETCH_TIME, getValidUrl } from '../api/utils/validate-url';
-import { EType, EWebStatus } from '../api/types';
-import { getUrlType, pattern } from '../popup/utils';
+import { REFETCH_TIME } from '../api/utils/validate-url';
+import { EWebStatus } from '../api/types';
+import { pattern } from '../common/utils/warning-url.util';
 import { Website } from '../rule-engine/types';
+import {
+	getGuardianPoints,
+	isDashboardUrl,
+	isExtensionPageUrl,
+	isHttpUrlString,
+	isPlainRecord,
+	isValidToken
+} from '../common/utils/extension-origin.util';
+
+function isHttpNavigationUrl(value: unknown): value is string {
+	if (typeof value !== 'string') return false;
+	try {
+		return ['http:', 'https:'].includes(new URL(value).protocol);
+	} catch {
+		return false;
+	}
+}
+
+let accountUpdate = Promise.resolve();
+
+function updateAccount(operation: () => Promise<void>): Promise<void> {
+	const pending = accountUpdate.then(operation);
+	accountUpdate = pending.catch(() => {
+		console.warn('Account update failed');
+	});
+	return pending;
+}
 
 browser.runtime.onConnect.addListener(function () {
 	console.log('connect!!!');
@@ -55,13 +82,6 @@ browser.runtime.setUninstallURL(process.env.REACT_APP_FEEDBACK_FORM_URL!);
 
 browser.webNavigation.onBeforeNavigate.addListener(async ({ url, tabId, frameId }) => {
 	if (frameId !== 0) return;
-	if (getUrlType(url) !== EType.WEBSITE) {
-		browser.action.setIcon({
-			path: `/assets/logo/ic-nighthawk-trusted.png`,
-			tabId
-		});
-		return;
-	}
 	if (pattern.test(url)) {
 		browser.action.setIcon({
 			path: `/assets/logo/ic-nighthawk-dangerous.png`,
@@ -69,13 +89,12 @@ browser.webNavigation.onBeforeNavigate.addListener(async ({ url, tabId, frameId 
 		});
 		return;
 	}
+	if (!isHttpNavigationUrl(url)) return;
 
 	const isListLoaded = await storageService.getNighthawkListFromStorage();
-	const dangerAgreeList = await storageService.getDangerAgreeListFromStorage();
-	const isDangerAgree = dangerAgreeList?.some((dangerUrl: string) => dangerUrl.includes(getValidUrl(url))) || false;
+	const isDangerAgree = await storageService.isDangerUrlAgreed(url);
 	if (!isListLoaded) {
 		await loadLists();
-		return;
 	}
 
 	const status = await scamReportService.checkScam({ url });
@@ -104,13 +123,6 @@ browser.webNavigation.onBeforeNavigate.addListener(async ({ url, tabId, frameId 
 
 browser.webNavigation.onCompleted.addListener(async ({ url, tabId, frameId }) => {
 	if (frameId !== 0) return;
-	if (getUrlType(url) !== EType.WEBSITE) {
-		browser.action.setIcon({
-			path: `/assets/logo/ic-nighthawk-trusted.png`,
-			tabId
-		});
-		return;
-	}
 	if (pattern.test(url)) {
 		browser.action.setIcon({
 			path: `/assets/logo/ic-nighthawk-dangerous.png`,
@@ -118,11 +130,11 @@ browser.webNavigation.onCompleted.addListener(async ({ url, tabId, frameId }) =>
 		});
 		return;
 	}
+	if (!isHttpNavigationUrl(url)) return;
 
 	const isListLoaded = await storageService.getNighthawkListFromStorage();
 	if (!isListLoaded) {
 		await loadLists();
-		return;
 	}
 
 	const status = await scamReportService.checkScam({ url });
@@ -171,7 +183,11 @@ browser.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
 });
 
 browser.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
-	if (msg.newIconPath) {
+	if (sender.id !== browser.runtime.id || !isPlainRecord(msg)) return false;
+	if (
+		typeof msg.newIconPath === 'string' &&
+		/^\/assets\/logo\/ic-nighthawk-(trusted|dangerous|unknown)\.png$/.test(msg.newIconPath)
+	) {
 		browser.action.setIcon({
 			path: msg.newIconPath,
 			tabId: sender?.tab?.id
@@ -184,6 +200,7 @@ browser.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
 			})
 			.catch(() => {
 				console.log('FAILED TO LOAD LISTS ON EXTENSION REQUEST');
+				sendResponse({});
 			});
 		return true;
 	}
@@ -195,13 +212,17 @@ browser.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
 			})
 			.catch(() => {
 				console.log('FAILED TO REFETCH LISTS ON EXTENSION REQUEST');
+				sendResponse({});
 			});
 		return true;
 	}
 
 	if (msg.action === 'setDangerUrl') {
-		const { url } = msg;
-		storageService.setDangerAgreeListToStorage(url);
+		if (isExtensionPageUrl(sender.url, browser.runtime.getURL('warning.html')) && isHttpUrlString(msg.url)) {
+			storageService.setDangerAgreeListToStorage(msg.url).then(() => sendResponse({}));
+			return true;
+		}
+		return false;
 	}
 
 	if (msg.action === 'loadRules') {
@@ -211,16 +232,25 @@ browser.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
 			})
 			.catch(() => {
 				console.log('FAILED TO LOAD RULES ON EXTENSION REQUEST');
+				sendResponse({ rules: [] });
 			});
 		return true;
 	}
 
 	if (msg.action === 'checkScamByRuleEngine') {
-		if (msg.payload) {
+		if (
+			sender.frameId === 0 &&
+			typeof sender.tab?.id === 'number' &&
+			isHttpNavigationUrl(sender.url) &&
+			isPlainRecord(msg.payload) &&
+			isPlainRecord(msg.payload.website)
+		) {
+			const website = msg.payload.website as unknown as Website;
+			const url = sender.url;
+			const tabId = sender.tab.id;
 			loadRules()
 				.then(() => {
-					const { url, website } = msg.payload;
-					handleFlaggedSites(website, url, sender?.tab?.id as number);
+					return handleFlaggedSites(website, url, tabId);
 				})
 				.catch(() => {
 					console.log('FAILED TO LOAD RULES ON EXTENSION REQUEST');
@@ -234,60 +264,78 @@ browser.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
 });
 
 browser.runtime.onConnect.addListener(async (port) => {
+	// The port name is public; authorize the browser-supplied sender independently.
+	if (
+		port.sender?.id !== browser.runtime.id ||
+		!isDashboardUrl(port.sender?.url) ||
+		(port.sender.frameId !== undefined && port.sender.frameId !== 0)
+	)
+		return;
 	if (port.name === process.env.REACT_APP_WEB_LOGIN) {
-		port.onMessage.addListener((msg) => {
-			// console.log('\n message =>', msg);
-
-			if (msg.isGuest) {
-				storageService.setGuestTokenToStorage(msg.token);
-				store.dispatch(
-					setAuthData({
-						token: msg.token,
-						isVerified: false
-					})
-				);
-			} else {
-				storageService.setTokenToStorage(msg.token);
-				storageService.removePointsFromStorage();
-				store.dispatch(setGuestGuardianPoints(null));
-				store.dispatch(
-					setAuthData({
-						token: msg.token,
-						isVerified: true
-					})
-				);
-			}
+		port.onMessage.addListener(async (msg) => {
+			if (!isPlainRecord(msg) || !isValidToken(msg.token) || typeof msg.isGuest !== 'boolean') return;
+			// Cancel automatic guest requests at intent time, before any storage awaits.
+			store.dispatch(invalidateAuthRequests());
+			const token = msg.token;
+			const isGuest = msg.isGuest;
+			return updateAccount(async () => {
+				if (isGuest) {
+					await storageService.removeTokensFromStorage();
+					if (!(await storageService.setGuestTokenToStorage(token))) return;
+					store.dispatch(
+						setAuthData({
+							token,
+							isVerified: false
+						})
+					);
+				} else {
+					await storageService.setTokenToStorage(token);
+					await storageService.removePointsFromStorage();
+					store.dispatch(setGuestGuardianPoints(null));
+					store.dispatch(
+						setAuthData({
+							token,
+							isVerified: true
+						})
+					);
+				}
+			});
 		});
 	}
 
 	if (port.name === process.env.REACT_APP_WEB_LOGOUT) {
-		store.dispatch(signOut());
-		await storageService.removeTokensFromStorage();
+		store.dispatch(invalidateAuthRequests());
+		await updateAccount(async () => {
+			await storageService.removeTokensFromStorage();
+			store.dispatch(signOut());
+		});
 	}
 
 	if (port.name === process.env.REACT_APP_WEB_GUARDIAN_POINTS) {
 		port.onMessage.addListener((msg) => {
-			storageService.setPointsToStorage(msg.points);
+			if (!isPlainRecord(msg)) return;
+			const points = getGuardianPoints(msg.points);
+			if (points !== null) storageService.setPointsToStorage(String(points));
 		});
 	}
 
 	if (port.name === process.env.REACT_APP_DANGER_AGREE) {
 		port.onMessage.addListener((msg) => {
-			storageService.setDangerAgreeListToStorage(msg.url);
+			if (isPlainRecord(msg) && isHttpUrlString(msg.url)) storageService.setDangerAgreeListToStorage(msg.url);
 		});
 	}
 	if (port.name === process.env.REACT_APP_TRUSTED_LIST_WEB) {
 		port.onMessage.addListener(async (msg) => {
-			if (msg.shouldUpdateCache) {
+			if (isPlainRecord(msg) && msg.shouldUpdateCache === true) {
 				await storageService.removeTrustedListFromStorage();
-				await loadLists()
+				await loadLists();
 			}
 		});
 	}
 
 	if (port.name === process.env.REACT_APP_LOAD_NIGHTHAWK_LIST) {
 		port.onMessage.addListener(async (msg) => {
-			if (msg.shouldLoadLists) {
+			if (isPlainRecord(msg) && msg.shouldLoadLists === true) {
 				await loadLists();
 			}
 		});
@@ -329,20 +377,14 @@ if (!isMozilla) {
 setInterval(async () => {
 	try {
 		await storageService.removeNighthawkLists();
-		const resp = await loadLists()
-		if (resp) {
-			const { nighthawkList, trustedList } = resp;
-			storageService.setNighthawkListToStorage(nighthawkList);
-			storageService.setTrustedListToStorage(trustedList);
-			console.log('Lists Re-fetched successfully');
-		}
+		await loadLists();
+		console.log('Lists Re-fetched successfully');
 	} catch (error) {
 		console.log('Error refetching lists');
 	}
 }, REFETCH_TIME);
 
-
-async function loadLists() {
+export async function loadLists() {
 	const token = await storageService.getTokenFromStorage();
 	return Promise.all([storageService.getNighthawkListFromStorage(), storageService.getTrustedListFromStorage()]).then(
 		async (res) => {
@@ -355,12 +397,15 @@ async function loadLists() {
 						'x-api-key': process.env.REACT_APP_NIGHTHAWK_API_KEY!
 					}
 				})
-					.then((res) => res.json())
+					.then((res) => {
+						if (!res.ok) throw new Error('List request failed');
+						return res.json();
+					})
 					.catch(() => {
 						console.log("CAN'T LOAD NIGHTHAWK LIST");
 					});
 				nighthawkList = resp;
-				storageService.setNighthawkListToStorage(resp);
+				if (resp) await storageService.setNighthawkListToStorage(resp);
 			}
 
 			if (!trustedList && token) {
@@ -369,13 +414,20 @@ async function loadLists() {
 						Authorization: `Bearer ${token}`
 					}
 				})
-					.then((res) => res.json())
+					.then((res) => {
+						if (!res.ok) throw new Error('Trusted-list request failed');
+						return res.json();
+					})
 					.catch(() => {
 						console.log("CAN'T LOAD TRUSTED LIST");
 					});
-				trustedList = resp;
-				storageService.setTrustedListToStorage(resp);
+				if (Array.isArray(resp)) {
+					await storageService.setTrustedListToStorage(resp, token);
+					trustedList = resp;
+				}
 			}
+			// An old authenticated response must not be returned to a newer session.
+			if ((await storageService.getTokenFromStorage()) !== token) trustedList = undefined;
 
 			return {
 				nighthawkList,
@@ -391,9 +443,9 @@ export async function loadRules() {
 		if (rules?.length) return rules;
 
 		const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/rules`, {
-			method: "GET",
+			method: 'GET',
 			headers: {
-				"Content-Type": "application/json",
+				'Content-Type': 'application/json',
 				'x-api-key': process.env.REACT_APP_NIGHTHAWK_API_KEY!
 			}
 		});
@@ -401,20 +453,19 @@ export async function loadRules() {
 		if (response.ok) {
 			const data = await response.json();
 			storageService.setRulesToStorage(data.rules);
-			return data.rules
+			return data.rules;
 		}
 
 		return [];
 	} catch (error) {
-		console.log("Error fetching rules", error);
+		console.log('Error fetching rules', error);
 	}
 }
 
 export async function handleFlaggedSites(website: Website, url: string, tabId: number) {
 	try {
 		const response = await scamReportService.checkScam({ url, requestFrom: 'ruleEngine', website });
-		const dangerAgreeList = await storageService.getDangerAgreeListFromStorage();
-		const isDangerAgree = dangerAgreeList?.some((dangerUrl: string) => dangerUrl.includes(getValidUrl(url))) || false;
+		const isDangerAgree = await storageService.isDangerUrlAgreed(url);
 
 		if (!response?.status) return;
 		if (response.status === EWebStatus.DANGEROUS) {
@@ -427,12 +478,11 @@ export async function handleFlaggedSites(website: Website, url: string, tabId: n
 				browser.tabs.update(tabId, {
 					url: `warning.html?url=${encodedUrl}&detected-by=rule-engine`
 				});
-
 			}
 			return;
 		}
 	} catch (error) {
-		console.log("Error checking scam by rule engine");
+		console.log('Error checking scam by rule engine');
 	}
 }
 

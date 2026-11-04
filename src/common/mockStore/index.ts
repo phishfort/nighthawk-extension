@@ -1,8 +1,8 @@
+import eventStore from '../../event/store';
+import store from '../store';
+
 const IS_DEV_MODE = 'development' === process.env.NODE_ENV;
 
-const defineStore = async () => {
-	const store = await (IS_DEV_MODE ? import('../../event/store') : import('../store'));
-	return store?.default;
-};
-
-export default defineStore();
+// These stores are already bundled statically. Dynamic imports use a DOM script
+// loader, which is unavailable in service workers and unsafe for content worlds.
+export default Promise.resolve(IS_DEV_MODE ? eventStore : store);

@@ -17,6 +17,7 @@ import { getOriginFromHref, removeWWW } from './utils/index.util';
 import { browser } from '../browser-service';
 import { selectIsAuth } from '../popup/features/store/auth';
 import MessageManagerComponent from './message-manager.component';
+import { isDashboardUrl } from '../common/utils/extension-origin.util';
 
 function ContentComponent() {
 	const { host, href, pathname, search } = document.location;
@@ -27,6 +28,7 @@ function ContentComponent() {
 	const activeTab = useAppSelector(getActiveTab);
 	const isAuth = useAppSelector(selectIsAuth);
 	const activeOrigin = getOriginFromHref(activeTab);
+	const isDashboard = isDashboardUrl(href);
 
 	const handleCheckSourceType = (host: string) => {
 		storeWithMiddleware.then(({ dispatch }) => dispatch(checkSourceType(host)));
@@ -55,8 +57,8 @@ function ContentComponent() {
 	return (
 		<>
 			{host === HOST_KEYS.YOUTUBE && <YoutubeContentPage />}
-			{host === HOST_KEYS.NIGHTHAWK_WEB_VERSION && <TokenManagerComponent />}
-			{href.includes(new URL(`${process.env.REACT_APP_WEB_URL}`).host) && <MessageManagerComponent />}
+			{isDashboard && <TokenManagerComponent />}
+			{isDashboard && <MessageManagerComponent />}
 			{host === HOST_KEYS.TWITTER || host === HOST_KEYS.X && <TwitterContentPage />}
 			{host === HOST_KEYS.GOOGLE && <GoogleContentPage />}
 			{host === HOST_KEYS.FACEBOOK && <FacebookContentPage />}
