@@ -8,8 +8,12 @@ export const authSlice = createSlice({
 	name: REDUCERS_NAMES.AUTH,
 	initialState,
 	reducers: {
+		invalidateAuthRequests: (state) => {
+			state.pendingRequests = {};
+		},
 		signOut: (state) => {
 			state.data = null;
+			state.pendingRequests = {};
 			state.shouldLogoutWeb = true;
 		},
 		setShouldLogoutWeb: (state, { payload }) => {
@@ -17,6 +21,7 @@ export const authSlice = createSlice({
 		},
 		setAuthData: (state, { payload }) => {
 			state.data = payload;
+			state.pendingRequests = {};
 		},
 		setAuthRedirectUrl: (state, { payload }) => {
 			state.authRedirectUrl = payload;
@@ -28,4 +33,4 @@ export const authSlice = createSlice({
 	}
 });
 
-export const { signOut, setAuthData, setShouldLogoutWeb, setAuthRedirectUrl } = authSlice.actions;
+export const { signOut, setAuthData, setShouldLogoutWeb, setAuthRedirectUrl, invalidateAuthRequests } = authSlice.actions;

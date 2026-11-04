@@ -22,6 +22,7 @@ export const createAsyncReducer = <S, P>(successCallback?: (state: S, payload: P
 };
 
 export interface IStateWithAsync {
+	pendingRequests: Record<string, boolean>;
 	isLoading: boolean;
 	isFailed: boolean;
 	data: any;
@@ -30,6 +31,7 @@ export interface IStateWithAsync {
 
 // Common
 export const stateWithAsync = {
+	pendingRequests: {} as Record<string, boolean>,
 	isLoading: false,
 	isFailed: false,
 	data: null as any,

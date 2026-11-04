@@ -1,26 +1,25 @@
 import React, { useEffect } from 'react';
 import { browser } from '../browser-service';
-const allowedOrigins = [process.env.REACT_APP_WEB_URL];
+import { isHttpUrlString, isPlainRecord, isTrustedDashboardMessage } from '../common/utils/extension-origin.util';
 
-function MessageManager(e: MessageEvent) {
-	if (e.source !== window) return;
-	if (allowedOrigins.includes(e.origin) === false) return;
-	if (e.data.type && e.data.type === process.env.REACT_APP_DANGER_AGREE) {
+export function messageManagerHandler(e: MessageEvent) {
+	if (!isTrustedDashboardMessage(e) || !isPlainRecord(e.data) || typeof e.data.type !== 'string') return;
+	if (e.data.type === process.env.REACT_APP_DANGER_AGREE && isHttpUrlString(e.data.url)) {
 		const port = browser?.runtime?.connect({ name: process.env.REACT_APP_DANGER_AGREE });
-		port.postMessage({ url: e.data.url });
+		port?.postMessage({ url: e.data.url });
 	}
 
-	if (e.data.type && e.data.type === process.env.REACT_APP_TRUSTED_LIST_WEB) {
+	if (e.data.type === process.env.REACT_APP_TRUSTED_LIST_WEB && typeof e.data.shouldUpdateCache === 'boolean') {
 		const port = browser?.runtime?.connect({ name: process.env.REACT_APP_TRUSTED_LIST_WEB });
-		port.postMessage({ shouldUpdateCache: e.data.shouldUpdateCache });
+		port?.postMessage({ shouldUpdateCache: e.data.shouldUpdateCache });
 	}
 }
 
 const MessageManagerComponent = () => {
 	useEffect(() => {
-		window.addEventListener('message', MessageManager);
+		window.addEventListener('message', messageManagerHandler);
 		return () => {
-			window.removeEventListener('message', MessageManager);
+			window.removeEventListener('message', messageManagerHandler);
 		};
 	}, []);
 

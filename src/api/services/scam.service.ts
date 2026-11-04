@@ -5,11 +5,44 @@ import { ECheckDataType, EType, EWebStatus, ICheckScamResponse } from '../types'
 import { storageService } from './storage.service';
 import { HttpService } from './http.service';
 import { ITrustedList } from '../../popup/pages/trusted-list-page/trusted-list.types';
-import { getValidUrl } from '../utils/validate-url';
+import { matchesListEntry } from '../utils/validate-url';
 import { browser } from '../../browser-service';
-import { SOC_MEDIA_TYPES } from '../../common/constants/app-keys.const';
 import { IFlaggedSite, Website } from '../../rule-engine/types';
 import RuleEngine from '../../rule-engine';
+
+const CHECK_LIST_TYPES: Record<ECheckDataType, EType> = {
+	[ECheckDataType.GOOGLE]: EType.WEBSITE,
+	[ECheckDataType.TWITTER]: EType.TWITTER,
+	[ECheckDataType.FACEBOOK]: EType.FACEBOOK,
+	[ECheckDataType.YOUTUBE]: EType.YOUTUBE,
+	[ECheckDataType.LINKEDIN]: EType.LINKEDIN,
+	[ECheckDataType.X]: EType.X
+};
+
+type UrlLists = Partial<Record<EType, string[]>>;
+
+interface LoadedLists {
+	nighthawkList?: { blacklist?: UrlLists; trustlist?: UrlLists };
+	trustedList?: ITrustedList[];
+}
+
+function requestLists(): Promise<LoadedLists | undefined> {
+	return new Promise((resolve) => {
+		try {
+			browser.runtime.sendMessage({ action: 'loadLists' }, (response: LoadedLists | undefined) => {
+				resolve(browser.runtime.lastError ? undefined : response);
+			});
+		} catch (error) {
+			resolve(undefined);
+		}
+	});
+}
+
+function matchesLists(lists: UrlLists | undefined, url: string, type?: EType): boolean {
+	return Object.entries(lists || {}).some(([key, entries]) =>
+		Array.isArray(entries) && entries.some((entry) => typeof entry === 'string' && matchesListEntry(entry, key as EType, url, type))
+	);
+}
 
 class ScamReportService {
 	constructor(private authHttpService: EnhancedWithAuthHttpService, private httpService: HttpService) { }
@@ -46,103 +79,30 @@ class ScamReportService {
 	}
 
 	async checkScam(data: { url: string; type?: ECheckDataType, requestFrom?: string, website?: Website }): Promise<ICheckScamResponse | null | void> {
-		if (Object.values(SOC_MEDIA_TYPES).some((el) => getValidUrl(el) === getValidUrl(data.url))) {
-			return {
-				status: EWebStatus.SAFE
-			};
-		}
-
 		if (data?.requestFrom === "ruleEngine" && data?.website) {
 			const response = await this.checkScamFromRuleEngine(data?.website, data?.url);
 			return response;
 		}
 
-		// check if url is in nighthawk list
-		let nighthawkList = await storageService.getNighthawkListFromStorage();
-		if (!nighthawkList) {
-			browser.runtime.sendMessage({ action: 'loadLists' }, (response) => {
-				if (response?.nighthawkList) {
-					nighthawkList = response?.nighthawkList;
-				}
-			});
-		}
-
-		let isDangerous = false;
-		let isSafe = false;
-
-		// search in type only
-		if (data.type) {
-			let key = '';
-			Object.keys(nighthawkList?.blacklist).forEach((item: any) => {
-				if (data.type === ECheckDataType.GOOGLE) {
-					key = EType.WEBSITE;
-				} else if (data.type?.toLowerCase().includes(item.toLowerCase())) {
-					key = item;
-				}
-			});
-
-			if (key) {
-				nighthawkList?.blacklist[key].forEach((url: any) => {
-					const nighthawkUrl = getValidUrl(url);
-					const item = nighthawkUrl && nighthawkUrl.toLowerCase() === getValidUrl(data.url).toLowerCase();
-					if (item) {
-						isDangerous = true;
-						return;
-					}
-				});
-
-				nighthawkList?.trustlist[key].forEach((url: any) => {
-					const nighthawkUrl = getValidUrl(url);
-					const item = nighthawkUrl && nighthawkUrl.toLowerCase() === getValidUrl(data.url).toLowerCase();
-					if (item) {
-						isSafe = true;
-						return;
-					}
-				});
-			}
-		} else {
-			Object.entries(nighthawkList?.blacklist).forEach(([key, value]: any) => {
-				value.forEach((url: any) => {
-					const nighthawkUrl = getValidUrl(url);
-					const item = nighthawkUrl && nighthawkUrl.toLowerCase() === getValidUrl(data.url).toLowerCase();
-					if (item) {
-						isDangerous = true;
-						return;
-					}
-				});
-			});
-
-			Object.entries(nighthawkList?.trustlist).forEach(([key, value]: any) => {
-				value.forEach((url: any) => {
-					const nighthawkUrl = getValidUrl(url);
-					const item = nighthawkUrl && nighthawkUrl.toLowerCase() === getValidUrl(data.url).toLowerCase();
-					if (item) {
-						isSafe = true;
-						return;
-					}
-				});
-			});
-		}
+		const type = data.type ? CHECK_LIST_TYPES[data.type] : undefined;
+		if (data.type && !type) return { status: EWebStatus.UNKNOWN };
 
 		const token = await storageService.getTokenFromStorage();
-		if (token) {
-			let trustedList = await storageService.getTrustedListFromStorage();
-			if (!trustedList) {
-				browser.runtime.sendMessage({ action: 'loadLists' }, (response) => {
-					if (response?.trustedList) {
-						trustedList = response?.trustedList;
-					}
-				});
-			}
+		let nighthawkList = await storageService.getNighthawkListFromStorage();
+		let trustedList = token ? await storageService.getTrustedListFromStorage() : undefined;
+		if (!nighthawkList || (token && !trustedList)) {
+			// The current check must await a cold-cache fetch before using its lists.
+			const loaded = await requestLists();
+			if (!nighthawkList) nighthawkList = loaded?.nighthawkList;
+			if (token && !trustedList && Array.isArray(loaded?.trustedList)) trustedList = loaded?.trustedList;
+		}
 
-			trustedList?.forEach((tl: ITrustedList) => {
-				const trustedListUrl = getValidUrl(tl.url);
-				const item = trustedListUrl && trustedListUrl.toLowerCase() === getValidUrl(data.url).toLowerCase();
-				if (item) {
-					isSafe = true;
-					return;
-				}
-			});
+		const isDangerous = matchesLists(nighthawkList?.blacklist, data.url, type);
+		let isSafe = matchesLists(nighthawkList?.trustlist, data.url, type);
+		// A login/logout during cache reads or a list request invalidates personal trust.
+		if (token && (await storageService.getTokenFromStorage()) === token &&
+			trustedList?.some((item: ITrustedList) => matchesListEntry(item.url, item.type, data.url, type))) {
+			isSafe = true;
 		}
 
 		if (isDangerous) return { status: EWebStatus.DANGEROUS };

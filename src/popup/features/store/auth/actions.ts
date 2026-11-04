@@ -10,10 +10,18 @@ interface IResponse {
 
 export const userGuestAuth = createAsyncThunk<IResponse, {}, { rejectValue: SerializedError }>(
 	`${REDUCERS_NAMES.AUTH}/${AUTH_ACTIONS_TYPES.GUEST}`,
-	async (_, { rejectWithValue }) => {
+	async (_, { rejectWithValue, getState, requestId }) => {
 		try {
+			const isCurrent = () =>
+				(getState() as { auth: { pendingRequests: Record<string, boolean> } }).auth.pendingRequests[requestId] === true;
 			const data = await authService.userGuestAuth();
-			storageService.setGuestTokenToStorage(data?.token as string);
+			if (!isCurrent() || (await storageService.getTokenFromStorage())) {
+				return rejectWithValue({ message: 'Authentication changed while the request was pending.' });
+			}
+			const saved = await storageService.setGuestTokenToStorage(data?.token as string, isCurrent);
+			if (!saved || !isCurrent()) {
+				return rejectWithValue({ message: 'Authentication changed while the request was pending.' });
+			}
 
 			return {
 				token: data?.token as string,

@@ -4,31 +4,43 @@ import {
 	selectAuthData,
 	selectAuthRedirectUrl,
 	selectShouldLogoutWeb,
-	setAuthData,
 	setAuthRedirectUrl,
 	setShouldLogoutWeb
 } from '../popup/features/store/auth';
 import { localStorageService } from '../api/services/local-storage.service';
 import { browser } from '../browser-service';
-import { storageService } from '../api/services';
 import { selectGuestGuardianPoints } from '../popup/features/store/user';
+import {
+	getDashboardOrigin,
+	getGuardianPoints,
+	isDashboardUrl,
+	isPlainRecord,
+	isTrustedDashboardMessage,
+	isValidToken
+} from '../common/utils/extension-origin.util';
 
-function tokenMessageHandler(e: MessageEvent) {
-	if (e.source !== window) return;
-	if (e.origin !== process.env.REACT_APP_WEB_URL) return;
+export function tokenMessageHandler(e: MessageEvent) {
+	if (!isTrustedDashboardMessage(e) || !isPlainRecord(e.data) || typeof e.data.type !== 'string') return;
 
-	if (e.data.type && e.data.type === process.env.REACT_APP_WEB_LOGIN) {
+	if (
+		e.data.type === process.env.REACT_APP_WEB_LOGIN &&
+		isValidToken(e.data.token) &&
+		typeof e.data.isGuest === 'boolean'
+	) {
 		const port = browser?.runtime?.connect({ name: process.env.REACT_APP_WEB_LOGIN });
-		port.postMessage({ token: e.data.token, isGuest: e.data.isGuest });
+		port?.postMessage({ token: e.data.token, isGuest: e.data.isGuest });
 	}
 
-	if (e.data.type && e.data.type === process.env.REACT_APP_WEB_LOGOUT) {
+	if (e.data.type === process.env.REACT_APP_WEB_LOGOUT) {
 		browser?.runtime?.connect({ name: process.env.REACT_APP_WEB_LOGOUT });
 	}
 
-	if (e.data.type && e.data.type === process.env.REACT_APP_WEB_GUARDIAN_POINTS) {
-		const port = browser?.runtime?.connect({ name: process.env.REACT_APP_WEB_GUARDIAN_POINTS });
-		port.postMessage({ points: e.data.points });
+	if (e.data.type === process.env.REACT_APP_WEB_GUARDIAN_POINTS) {
+		const points = getGuardianPoints(e.data.points);
+		if (points !== null) {
+			const port = browser?.runtime?.connect({ name: process.env.REACT_APP_WEB_GUARDIAN_POINTS });
+			port?.postMessage({ points });
+		}
 	}
 }
 
@@ -40,9 +52,13 @@ const TokenManagerComponent = () => {
 	const dispatch = useAppDispatch();
 
 	function initTokenHandling() {
+		const dashboardOrigin = getDashboardOrigin();
+		if (!dashboardOrigin || !isDashboardUrl(window.location.href)) return;
 		const userWebToken = localStorageService.getWebTokenFromStorage();
 		const guestWebToken = localStorageService.getWebGuestTokenFromStorage();
-		const webToken = userWebToken || guestWebToken;
+		const validUserToken = isValidToken(userWebToken) ? userWebToken : null;
+		const validGuestToken = isValidToken(guestWebToken) ? guestWebToken : null;
+		const webToken = validUserToken || validGuestToken;
 
 		if (shouldLogoutWeb) {
 			dispatch(setShouldLogoutWeb(false));
@@ -51,35 +67,39 @@ const TokenManagerComponent = () => {
 				localStorageService.setAuthRedirectUrlFromStorage(authRedirectUrl);
 				dispatch(setAuthRedirectUrl(''));
 			}
-			window.postMessage({ type: process.env.REACT_APP_EXT_LOGOUT });
+			window.postMessage({ type: process.env.REACT_APP_EXT_LOGOUT }, dashboardOrigin);
 		}
 
 		if (!shouldLogoutWeb && webToken && !authData?.token) {
-			dispatch(
-				setAuthData({
-					token: userWebToken || guestWebToken,
-					isVerified: !!userWebToken
-				})
-			);
-			userWebToken && storageService.setTokenToStorage(userWebToken);
-			guestWebToken && storageService.setGuestTokenToStorage(guestWebToken);
+			// The background owns account changes, cache invalidation and persistence.
+			const port = browser?.runtime?.connect({ name: process.env.REACT_APP_WEB_LOGIN });
+			port?.postMessage({ token: webToken, isGuest: !validUserToken });
 		}
 
-		if (!shouldLogoutWeb && ((!webToken && authData?.token) || (authData?.token && webToken !== authData?.token))) {
-			window.postMessage({
-				type: process.env.REACT_APP_EXT_LOGIN,
-				token: authData.token,
-				isGuest: !authData.isVerified
-			});
+		if (!shouldLogoutWeb && isValidToken(authData?.token) && webToken !== authData?.token) {
+			window.postMessage(
+				{
+					type: process.env.REACT_APP_EXT_LOGIN,
+					token: authData.token,
+					isGuest: !authData.isVerified
+				},
+				dashboardOrigin
+			);
 		}
 	}
 
 	function initGuardianPointsHandling() {
-		if (guestGuardianPoints) {
-			window.postMessage({
-				type: process.env.REACT_APP_EXT_GUARDIAN_POINTS,
-				points: guestGuardianPoints
-			});
+		const dashboardOrigin = getDashboardOrigin();
+		if (!dashboardOrigin || !isDashboardUrl(window.location.href)) return;
+		const points = getGuardianPoints(guestGuardianPoints);
+		if (points !== null) {
+			window.postMessage(
+				{
+					type: process.env.REACT_APP_EXT_GUARDIAN_POINTS,
+					points
+				},
+				dashboardOrigin
+			);
 		}
 	}
 
@@ -92,7 +112,7 @@ const TokenManagerComponent = () => {
 
 	useEffect(() => {
 		initTokenHandling();
-	}, [authData?.token]);
+	}, [authData?.token, authData?.isVerified, shouldLogoutWeb, authRedirectUrl]);
 
 	useEffect(() => {
 		initGuardianPointsHandling();

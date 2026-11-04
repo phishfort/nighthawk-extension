@@ -3,8 +3,11 @@ import { browser } from '../../browser-service';
 import { EType, EWebStatus } from '../../api/types';
 import { ROUTES } from '../components/navigator/routes.utils';
 import { FormSelectProps } from '../components/common/form-field-container/types';
-import { HOST_KEYS, SOC_MEDIA_TYPES } from '../../common/constants/app-keys.const';
+import { HOST_KEYS } from '../../common/constants/app-keys.const';
+import { getUrlPlatform, getWebsiteHostname, parseWebUrl } from '../../api/utils/validate-url';
 import { removeWWW } from '../../content/utils/index.util';
+import { pattern } from '../../common/utils/warning-url.util';
+export { pattern } from '../../common/utils/warning-url.util';
 
 export const handleRedirect = (url: string) => {
 	browser.tabs.query({ currentWindow: true, active: true }, function (tabs) {
@@ -16,8 +19,6 @@ export const handleRedirect = (url: string) => {
 		}
 	});
 };
-
-export const pattern = /^(moz-extension:\/\/|chrome-extension:\/\/).+\/warning\.html(\?url=.*)?$/;
 
 export const getInitRoute = (activeTab: string, type: EWebStatus) => {
 	if (pattern.test(activeTab)) {
@@ -50,25 +51,9 @@ export const handleFormType = (
 	url: string,
 	setCurrentType: Dispatch<React.SetStateAction<FormSelectProps | null>>
 ) => {
-	let validateUrl = url;
-	try {
-		const { host } = new URL(url.toLowerCase());
-		validateUrl = removeWWW(host);
-	} catch (error) {
-		console.log(error);
-	}
-	const socMediaType = Object.entries(SOC_MEDIA_TYPES).reduce(
-		(acc, [key, value]) => (validateUrl.includes(value) ? key : acc),
-		''
-	);
-
-	if (socMediaType && socMediaType !== currentType) {
-		const nextOption = getNextOption(socMediaType as EType);
-		if (nextOption) setCurrentType(nextOption);
-	}
-
-	if (!socMediaType && currentType !== EType.WEBSITE && validateUrl) {
-		const nextOption = getNextOption(EType.WEBSITE);
+	const type = getUrlType(url);
+	if (type !== currentType && url.trim()) {
+		const nextOption = getNextOption(type);
 		if (nextOption) setCurrentType(nextOption);
 	}
 };
@@ -127,72 +112,45 @@ export const handleTrustPlaceholder = (currentType: EType) => {
 	}
 };
 
-export const validateUrl = (url: string, path: string, search?: string): string => {
-	const typeOfUrl = url.split('.')[0];
-
-	if (typeOfUrl.includes(EType.FACEBOOK)) {
-		if (path.includes('groups')) {
-			return `${url}/groups/${path.split('/')[2]}`;
+export const validateUrl = (host: string, path: string, search = ''): string => {
+	const url = parseWebUrl(`https://${host}${path}${search}`);
+	if (!url) return '';
+	const dns = getWebsiteHostname(url.href);
+	const type = getUrlType(url.href);
+	const parts = url.pathname.split('/').filter(Boolean);
+	if (type === EType.FACEBOOK) {
+		if (parts[0] === 'groups' && parts[1]) return `${dns}/groups/${parts[1]}`;
+		if (url.pathname === '/profile.php' && url.searchParams.get('id')) {
+			return `${dns}/profile.php?id=${encodeURIComponent(url.searchParams.get('id') || '')}`;
 		}
-
-		if (search) {
-			return `${url}${path}${search}`;
+		if (parts[0] === 'people' && parts[1] && parts[2]) return `${dns}/people/${parts[1]}/${parts[2]}`;
+		return parts[0] ? `${dns}/${parts[0]}` : dns;
+	}
+	if (type === EType.TWITTER || type === EType.X) return parts[0] ? `${dns}/${parts[0]}` : dns;
+	if (type === EType.LINKEDIN) return parts.length >= 2 ? `${dns}/${parts[0]}/${parts[1]}` : dns;
+	if (type === EType.YOUTUBE) {
+		if (url.pathname === '/watch' && url.searchParams.get('v')) {
+			return `${dns}/watch?v=${encodeURIComponent(url.searchParams.get('v') || '')}`;
 		}
-
-		return `${url}/${path.split('/')[1]}`;
+		if (['channel', 'c', 'user'].includes(parts[0]) && parts[1]) return `${dns}/${parts[0]}/${parts[1]}`;
+		if (parts[0]?.startsWith('@')) return `${dns}/${parts[0]}`;
 	}
-
-	if (typeOfUrl.includes(EType.TWITTER)) {
-		return `${url}/${path.split('/')[1]}`;
-	}
-
-	if (typeOfUrl.includes(EType.LINKEDIN)) {
-		return `${url}/${path.split('/')[1]}/${path.split('/')[2]}`;
-	}
-
-	if (typeOfUrl.includes(EType.YOUTUBE)) {
-		if (path.split('/').length === 3) {
-			return `${url}/@${path.split('/')[2]}`;
-		}
-		return `${url}${path}`;
-	}
-
-	if (typeOfUrl.includes(EType.X)) {
-		return `${url}/${path.split('/')[1]}`;
-	}
-
-	return url;
+	return dns;
 };
 
-export const getValidUrl = (url: string, noWWW?: boolean) => {
-	try {
-		const { host, pathname, search } = new URL(url.toLowerCase());
-		let dns = host;
-
-		if (host.includes('www.')) {
-			dns = host.split('www.')[1];
-		}
-		const res = validateUrl(dns, pathname, search);
-
-		return noWWW ? res : `www.${res}`;
-	} catch (e) {
-		console.log(e);
-	}
+export const getValidUrl = (value: string, noWWW?: boolean) => {
+	const url = parseWebUrl(value);
+	if (!url) return '';
+	const normalized = validateUrl(url.hostname, url.pathname, url.search);
+	return noWWW ? normalized : `www.${normalized}`;
 };
 
-export const getUrlType = (url: string) => {
-	if (url.includes(EType.FACEBOOK)) return EType.FACEBOOK;
-	if (url.includes(EType.TWITTER)) return EType.TWITTER;
-	if (url.includes(EType.LINKEDIN)) return EType.LINKEDIN;
-	if (url.includes(EType.YOUTUBE)) return EType.YOUTUBE;
-	if (url.includes('x.com')) return EType.X;
-	return EType.WEBSITE;
-};
+export const getUrlType = (url: string): EType => getUrlPlatform(url);
 
 export const checkUrl = (url: string): string => {
 	try {
 		const host = removeWWW(new URL(url).host);
-		if (host && host != 'newtab') {
+		if (host && host !== 'newtab') {
 			return url ? 'www.' + host : '';
 		}
 
